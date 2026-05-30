@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>色差计算工具 - CMC / φ空间 / CIEDE2000</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 { font-size: 28px; margin-bottom: 10px; }
+        .header p { opacity: 0.9; font-size: 14px; }
+        .content { padding: 30px; }
+        .input-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        .color-box {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            border: 2px solid #e9ecef;
+        }
+        .color-box h3 {
+            color: #495057;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+        .color-preview {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            border: 2px solid #dee2e6;
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 10px;
+        }
+        .input-group {
+            margin-bottom: 12px;
+        }
+        .input-group label {
+            display: block;
+            color: #6c757d;
+            font-size: 12px;
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 15px;
+        }
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .btn-calculate {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 30px;
+        }
+        .btn-calculate:hover {
+            opacity: 0.9;
+        }
+        .results {
+            display: none;
+        }
+        .results.show {
+            display: block;
+        }
+        .result-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .result-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid #dee2e6;
+        }
+        .result-card.highlight {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .result-card .label {
+            font-size: 12px;
+            color: #6c757d;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        .result-card.highlight .label { color: rgba(255,255,255,0.8); }
+        .result-card .value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #212529;
+        }
+        .result-card.highlight .value { color: white; }
+        .detail-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+        .detail-table th {
+            background: #495057;
+            color: white;
+            padding: 12px;
+            text-align: left;
+        }
+        .detail-table td {
+            padding: 12px;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .detail-table tr:nth-child(even) { background: #f8f9fa; }
+        .comparison-bar {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+        }
+        .comparison-bar h4 {
+            margin-bottom: 15px;
+            color: #495057;
+        }
+        .bar-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .bar-label {
+            width: 100px;
+            font-size: 13px;
+            color: #6c757d;
+        }
+        .bar-track {
+            flex: 1;
+            height: 30px;
+            background: #dee2e6;
+            border-radius: 15px;
+            overflow: hidden;
+        }
+        .bar-fill {
+            height: 100%;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 10px;
+            color: white;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .bar-fill.cmc { background: #e74c3c; }
+        .bar-fill.phi { background: #3498db; }
+        .bar-fill.cie { background: #2ecc71; }
+        @media (max-width: 768px) {
+            .input-section { grid-template-columns: 1fr; }
+            .result-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>色差计算工具</h1>
+            <p>CMC(l:c) | φ空间感知均匀化 | CIEDE2000</p>
+        </div>
+        <div class="content">
+            <div class="input-section">
+                <div class="color-box">
+                    <h3>
+                        <span class="color-preview" id="preview1" style="background:rgb(128,0,0)"></span>
+                        标样 (Standard)
+                    </h3>
+                    <div class="input-group">
+                        <label>L* (明度, 0-100)</label>
+                        <input type="number" id="L1" value="50" step="0.1">
+                    </div>
+                    <div class="input-group">
+                        <label>a* (绿-红)</label>
+                        <input type="number" id="a1" value="30" step="0.1">
+                    </div>
+                    <div class="input-group">
+                        <label>b* (蓝-黄)</label>
+                        <input type="number" id="b1" value="0" step="0.1">
+                    </div>
+                </div>
+                <div class="color-box">
+                    <h3>
+                        <span class="color-preview" id="preview2" style="background:rgb(128,30,0)"></span>
+                        样品 (Sample)
+                    </h3>
+                    <div class="input-group">
+                        <label>L* (明度, 0-100)</label>
+                        <input type="number" id="L2" value="50" step="0.1">
+                    </div>
+                    <div class="input-group">
+                        <label>a* (绿-红)</label>
+                        <input type="number" id="a2" value="30" step="0.1">
+                    </div>
+                    <div class="input-group">
+                        <label>b* (蓝-黄)</label>
+                        <input type="number" id="b2" value="10" step="0.1">
+                    </div>
+                </div>
+            </div>
+            <button class="btn-calculate" id="calcBtn">计算色差</button>
+            <div class="results" id="results">
+                <div class="result-grid">
+                    <div class="result-card highlight">
+                        <div class="label">CMC 色差</div>
+                        <div class="value" id="cmc-result">-</div>
+                    </div>
+                    <div class="result-card">
+                        <div class="label">φ空间色差</div>
+                        <div class="value" id="phi-result">-</div>
+                    </div>
+                    <div class="result-card">
+                        <div class="label">CIEDE2000</div>
+                        <div class="value" id="cie-result">-</div>
+                    </div>
+                </div>
+                <table class="detail-table">
+                    <thead>
+                        <tr><th>参数</th><th>标样</th><th>样品</th><th>差值</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><strong>色相角 h</strong></td><td id="h1-val">-</td><td id="h2-val">-</td><td id="dh-val">-</td></tr>
+                        <tr><td><strong>新色相角 φ</strong></td><td id="phi1-val">-</td><td id="phi2-val">-</td><td id="dphi-val">-</td></tr>
+                        <tr><td><strong>彩度 C</strong></td><td id="C1-val">-</td><td id="C2-val">-</td><td id="dC-val">-</td></tr>
+                        <tr><td><strong>明度 L</strong></td><td id="L1-d">-</td><td id="L2-d">-</td><td id="dL-val">-</td></tr>
+                    </tbody>
+                </table>
+                <div class="comparison-bar">
+                    <h4>色差对比可视化</h4>
+                    <div class="bar-item">
+                        <div class="bar-label">CMC</div>
+                        <div class="bar-track"><div class="bar-fill cmc" id="bar-cmc" style="width:0%">0</div></div>
+                    </div>
+                    <div class="bar-item">
+                        <div class="bar-label">φ空间</div>
+                        <div class="bar-track"><div class="bar-fill phi" id="bar-phi" style="width:0%">0</div></div>
+                    </div>
+                    <div class="bar-item">
+                        <div class="bar-label">CIEDE2000</div>
+                        <div class="bar-track"><div class="bar-fill cie" id="bar-cie" style="width:0%">0</div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // LAB to RGB for preview
+        function labToRgb(L, a, b) {
+            let y = (L + 16) / 116;
+            let x = a / 500 + y;
+            let z = y - b / 200;
+            x = 0.95047 * ((x > 0.206897) ? x*x*x : (x - 16/116) / 7.787);
+            y = 1.00000 * ((y > 0.206897) ? y*y*y : (y - 16/116) / 7.787);
+            z = 1.08883 * ((z > 0.206897) ? z*z*z : (z - 16/116) / 7.787);
+            let r = x *  3.2406 + y * -1.5372 + z * -0.4986;
+            let g = x * -0.9689 + y *  1.8758 + z *  0.0415;
+            let bl = x *  0.0557 + y * -0.2040 + z *  1.0570;
+            r = (r > 0.0031308) ? (1.055 * Math.pow(r, 1/2.4) - 0.055) : 12.92 * r;
+            g = (g > 0.0031308) ? (1.055 * Math.pow(g, 1/2.4) - 0.055) : 12.92 * g;
+            bl = (bl > 0.0031308) ? (1.055 * Math.pow(bl, 1/2.4) - 0.055) : 12.92 * bl;
+            return `rgb(${Math.max(0,Math.min(255,Math.round(r*255)))},${Math.max(0,Math.min(255,Math.round(g*255)))},${Math.max(0,Math.min(255,Math.round(bl*255)))}`;
+        }
+
+        function updatePreview() {
+            const L1 = parseFloat(document.getElementById('L1').value) || 0;
+            const a1 = parseFloat(document.getElementById('a1').value) || 0;
+            const b1 = parseFloat(document.getElementById('b1').value) || 0;
+            const L2 = parseFloat(document.getElementById('L2').value) || 0;
+            const a2 = parseFloat(document.getElementById('a2').value) || 0;
+            const b2 = parseFloat(document.getElementById('b2').value) || 0;
+            document.getElementById('preview1').style.background = labToRgb(L1, a1, b1);
+            document.getElementById('preview2').style.background = labToRgb(L2, a2, b2);
+        }
+
+        ['L1','a1','b1','L2','a2','b2'].forEach(id => {
+            document.getElementById(id).addEventListener('input', updatePreview);
+        });
+
+        function computeT(h) {
+            while (h < 0) h += 360;
+            while (h >= 360) h -= 360;
+            if (h >= 164 && h <= 345) {
+                return 0.56 + Math.abs(0.2 * Math.cos((h + 168) * Math.PI / 180));
+            }
+            return 0.36 + Math.abs(0.4 * Math.cos((h + 35) * Math.PI / 180));
+        }
+
+        function computeF(C) {
+            return Math.sqrt(Math.pow(C, 4) / (Math.pow(C, 4) + 1900));
+        }
+
+        function computeSC(C) {
+            return 0.0638 * C / (1 + 0.0131 * C) + 0.638;
+        }
+
+        function computeSL(L) {
+            return L < 16 ? 0.511 : 0.040975 * L / (1 + 0.01765 * L);
+        }
+
+        const phiCache = {};
+        function getPhiLUT(C) {
+            const key = Math.round(C * 10);
+            if (phiCache[key]) return phiCache[key];
+            const n = 5000;
+            const hVals = [];
+            for (let i = 0; i < n; i++) hVals.push(i * 360 / (n - 1));
+            const f = computeF(C);
+            let I = 0;
+            const dh = 2 * Math.PI / (n - 1);
+            const phiVals = [0];
+            for (let i = 1; i < n; i++) {
+                const g1 = f * computeT(hVals[i-1]) + (1 - f);
+                const g2 = f * computeT(hVals[i]) + (1 - f);
+                I += 0.5 * (1/g1 + 1/g2) * dh;
+                phiVals.push(I);
+            }
+            const K = 2 * Math.PI / I;
+            for (let i = 0; i < n; i++) phiVals[i] *= K;
+            phiCache[key] = { hVals, phiVals, K };
+            return phiCache[key];
+        }
+
+        function hToPhi(h, C) {
+            const lut = getPhiLUT(C);
+            const { hVals, phiVals } = lut;
+            for (let i = 0; i < hVals.length - 1; i++) {
+                if (hVals[i] <= h && h <= hVals[i+1]) {
+                    const t = (h - hVals[i]) / (hVals[i+1] - hVals[i]);
+                    return phiVals[i] + t * (phiVals[i+1] - phiVals[i]);
+                }
+            }
+            return phiVals[phiVals.length - 1];
+        }
+
+        function deltaE_CMC(L1, a1, b1, L2, a2, b2) {
+            const C1 = Math.sqrt(a1*a1 + b1*b1);
+            const C2 = Math.sqrt(a2*a2 + b2*b2);
+            let h1 = Math.atan2(b1, a1) * 180 / Math.PI;
+            if (h1 < 0) h1 += 360;
+            const dL = L2 - L1;
+            const dC = C2 - C1;
+            const dEab = Math.sqrt(Math.pow(L2-L1, 2) + Math.pow(a2-a1, 2) + Math.pow(b2-b1, 2));
+            const dH = Math.sqrt(Math.max(0, dEab*dEab - dL*dL - dC*dC));
+            const SL = computeSL(L1);
+            const SC = computeSC(C1);
+            const f = computeF(C1);
+            const T = computeT(h1);
+            const SH = SC * (f * T + (1 - f));
+            return Math.sqrt(Math.pow(dL/(2*SL), 2) + Math.pow(dC/(1*SC), 2) + Math.pow(dH/SH, 2));
+        }
+
+        function deltaE_Phi(L1, a1, b1, L2, a2, b2) {
+            const C1 = Math.sqrt(a1*a1 + b1*b1);
+            const C2 = Math.sqrt(a2*a2 + b2*b2);
+            let h1 = Math.atan2(b1, a1) * 180 / Math.PI;
+            if (h1 < 0) h1 += 360;
+            let h2 = Math.atan2(b2, a2) * 180 / Math.PI;
+            if (h2 < 0) h2 += 360;
+            const Cavg = (C1 + C2) / 2;
+            const phi1 = hToPhi(h1, Cavg);
+            const phi2 = hToPhi(h2, Cavg);
+            let dPhi = Math.abs(phi2 - phi1);
+            if (dPhi > Math.PI) dPhi = 2 * Math.PI - dPhi;
+            const lut = getPhiLUT(Cavg);
+            const SC = computeSC(Cavg);
+            const Sphi = SC * lut.K / Cavg;
+            const dL = L2 - L1;
+            const dC = C2 - C1;
+            const SL = computeSL(L1);
+            return Math.sqrt(Math.pow(dL/(2*SL), 2) + Math.pow(dC/(1*SC), 2) + Math.pow(dPhi/Sphi, 2));
+        }
+
+        function deltaE_CIE2000(L1, a1, b1, L2, a2, b2) {
+            const C1 = Math.sqrt(a1*a1 + b1*b1);
+            const C2 = Math.sqrt(a2*a2 + b2*b2);
+            const Cavg = (C1 + C2) / 2;
+            const G = 0.5 * (1 - Math.sqrt(Math.pow(Cavg, 7) / (Math.pow(Cavg, 7) + Math.pow(25, 7))));
+            const a1p = a1 * (1 + G);
+            const a2p = a2 * (1 + G);
+            const C1p = Math.sqrt(a1p*a1p + b1*b1);
+            const C2p = Math.sqrt(a2p*a2p + b2*b2);
+            const Cavgp = (C1p + C2p) / 2;
+            let h1p = Math.atan2(b1, a1p) * 180 / Math.PI;
+            if (h1p < 0) h1p += 360;
+            let h2p = Math.atan2(b2, a2p) * 180 / Math.PI;
+            if (h2p < 0) h2p += 360;
+            const dLp = L2 - L1;
+            const dCp = C2p - C1p;
+            let dhp = h2p - h1p;
+            if (Math.abs(dhp) > 180) dhp += (h2p <= h1p) ? 360 : -360;
+            const dHp = 2 * Math.sqrt(C1p * C2p) * Math.sin(dhp * Math.PI / 360);
+            const Lavg = (L1 + L2) / 2;
+            const SL = 1 + 0.015 * Math.pow(Lavg - 50, 2) / Math.sqrt(20 + Math.pow(Lavg - 50, 2));
+            const SC = 1 + 0.045 * Cavgp;
+            let havg = (h1p + h2p) / 2;
+            if (Math.abs(h1p - h2p) > 180) havg += 180;
+            if (havg >= 360) havg -= 360;
+            const T = 1 - 0.17 * Math.cos((havg - 30) * Math.PI / 180)
+                    + 0.24 * Math.cos(2 * havg * Math.PI / 180)
+                    + 0.32 * Math.cos((3 * havg + 6) * Math.PI / 180)
+                    - 0.20 * Math.cos((4 * havg - 63) * Math.PI / 180);
+            const SH = 1 + 0.015 * Cavgp * T;
+            const RT = -2 * Math.sqrt(Math.pow(Cavgp, 7) / (Math.pow(Cavgp, 7) + Math.pow(25, 7)))
+                     * Math.sin(60 * Math.exp(-Math.pow((havg - 275) / 25, 2)) * Math.PI / 180);
+            return Math.sqrt(
+                Math.pow(dLp / SL, 2) +
+                Math.pow(dCp / SC, 2) +
+                Math.pow(dHp / SH, 2) +
+                RT * (dCp / SC) * (dHp / SH)
+            );
+        }
+
+        function calculate() {
+            console.log('Calculating...');
+            const L1 = parseFloat(document.getElementById('L1').value) || 0;
+            const a1 = parseFloat(document.getElementById('a1').value) || 0;
+            const b1 = parseFloat(document.getElementById('b1').value) || 0;
+            const L2 = parseFloat(document.getElementById('L2').value) || 0;
+            const a2 = parseFloat(document.getElementById('a2').value) || 0;
+            const b2 = parseFloat(document.getElementById('b2').value) || 0;
+
+            const C1 = Math.sqrt(a1*a1 + b1*b1);
+            const C2 = Math.sqrt(a2*a2 + b2*b2);
+            let h1 = Math.atan2(b1, a1) * 180 / Math.PI;
+            if (h1 < 0) h1 += 360;
+            let h2 = Math.atan2(b2, a2) * 180 / Math.PI;
+            if (h2 < 0) h2 += 360;
+
+            const Cavg = (C1 + C2) / 2;
+            const phi1 = hToPhi(h1, Cavg);
+            const phi2 = hToPhi(h2, Cavg);
+
+            let dh = Math.abs(h2 - h1);
+            if (dh > 180) dh = 360 - dh;
+            let dphi = Math.abs(phi2 - phi1);
+            if (dphi > Math.PI) dphi = 2 * Math.PI - dphi;
+
+            const cmc = deltaE_CMC(L1, a1, b1, L2, a2, b2);
+            const phi = deltaE_Phi(L1, a1, b1, L2, a2, b2);
+            const cie = deltaE_CIE2000(L1, a1, b1, L2, a2, b2);
+
+            document.getElementById('cmc-result').textContent = cmc.toFixed(4);
+            document.getElementById('phi-result').textContent = phi.toFixed(4);
+            document.getElementById('cie-result').textContent = cie.toFixed(4);
+
+            document.getElementById('h1-val').textContent = h1.toFixed(2) + '°';
+            document.getElementById('h2-val').textContent = h2.toFixed(2) + '°';
+            document.getElementById('dh-val').textContent = dh.toFixed(2) + '°';
+
+            document.getElementById('phi1-val').textContent = (phi1 * 180 / Math.PI).toFixed(2) + '°';
+            document.getElementById('phi2-val').textContent = (phi2 * 180 / Math.PI).toFixed(2) + '°';
+            document.getElementById('dphi-val').textContent = (dphi * 180 / Math.PI).toFixed(2) + '°';
+
+            document.getElementById('C1-val').textContent = C1.toFixed(2);
+            document.getElementById('C2-val').textContent = C2.toFixed(2);
+            document.getElementById('dC-val').textContent = (C2 - C1).toFixed(2);
+
+            document.getElementById('L1-d').textContent = L1.toFixed(2);
+            document.getElementById('L2-d').textContent = L2.toFixed(2);
+            document.getElementById('dL-val').textContent = (L2 - L1).toFixed(2);
+
+            const maxVal = Math.max(cmc, phi, cie, 1);
+            document.getElementById('bar-cmc').style.width = Math.min(100, (cmc / maxVal) * 100) + '%';
+            document.getElementById('bar-cmc').textContent = cmc.toFixed(3);
+            document.getElementById('bar-phi').style.width = Math.min(100, (phi / maxVal) * 100) + '%';
+            document.getElementById('bar-phi').textContent = phi.toFixed(3);
+            document.getElementById('bar-cie').style.width = Math.min(100, (cie / maxVal) * 100) + '%';
+            document.getElementById('bar-cie').textContent = cie.toFixed(3);
+
+            document.getElementById('results').classList.add('show');
+            console.log('Done!');
+        }
+
+        document.getElementById('calcBtn').addEventListener('click', calculate);
+        updatePreview();
+    </script>
+</body>
+</html>
