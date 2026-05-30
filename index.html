@@ -3,302 +3,829 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>色差计算工具 - CMC / φ空间 / CIEDE2000</title>
+    <title>色差计算工具 - φ空间/CMC/CIEDE2000</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
+
         body {
-            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            padding: 20px;
+            padding: 20px 10px;
         }
+
         .container {
-            max-width: 900px;
+            max-width: 800px;
             margin: 0 auto;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            overflow: hidden;
         }
+
+        /* Header */
         .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px;
             text-align: center;
+            padding: 30px 20px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 20px 20px 0 0;
+            backdrop-filter: blur(10px);
         }
-        .header h1 { font-size: 28px; margin-bottom: 10px; }
-        .header p { opacity: 0.9; font-size: 14px; }
-        .content { padding: 30px; }
+
+        .header h1 {
+            color: #fff;
+            font-size: 2em;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .header .subtitle {
+            color: rgba(255,255,255,0.8);
+            font-size: 0.95em;
+        }
+
+        /* Main Card */
+        .main-card {
+            background: #fff;
+            border-radius: 0 0 20px 20px;
+            padding: 25px 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        /* Color Preview Section - Large, no border-radius, no labels */
+        .preview-section {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 25px;
+            width: 100%;
+        }
+
+        .preview-wrapper {
+            display: flex;
+            width: 100%;
+            max-width: 100%;
+        }
+
+        .color-preview-box {
+            flex: 1;
+            height: 150px;
+            border: none;
+            transition: all 0.3s;
+        }
+
+        .color-preview-box:first-child {
+            border-radius: 0;
+        }
+
+        .color-preview-box:last-child {
+            border-radius: 0;
+        }
+
+        /* Input Section */
         .input-section {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 30px;
-            margin-bottom: 30px;
+            gap: 20px;
+            margin-bottom: 20px;
         }
-        .color-box {
+
+        @media (max-width: 600px) {
+            .input-section {
+                grid-template-columns: 1fr;
+            }
+            .color-preview-box {
+                height: 120px;
+            }
+        }
+
+        .color-card {
             background: #f8f9fa;
             border-radius: 15px;
             padding: 20px;
-            border: 2px solid #e9ecef;
+            border: 2px solid transparent;
+            transition: all 0.3s;
         }
-        .color-box h3 {
-            color: #495057;
+
+        .color-card:hover {
+            border-color: rgba(102, 126, 234, 0.3);
+        }
+
+        .color-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
             margin-bottom: 15px;
-            font-size: 16px;
         }
-        .color-preview {
-            width: 40px;
-            height: 40px;
+
+        .color-header h3 {
+            font-size: 1.1em;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .btn-random {
+            padding: 6px 14px;
+            border: none;
             border-radius: 8px;
-            border: 2px solid #dee2e6;
-            display: inline-block;
-            vertical-align: middle;
-            margin-right: 10px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #fff;
+            font-size: 0.85em;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
         }
+
+        .btn-random:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
         .input-group {
             margin-bottom: 12px;
         }
+
         .input-group label {
             display: block;
-            color: #6c757d;
-            font-size: 12px;
-            margin-bottom: 4px;
-            font-weight: 600;
+            font-size: 0.85em;
+            color: #666;
+            margin-bottom: 5px;
+            font-weight: 500;
         }
-        .input-group input {
+
+        .input-group input[type="number"] {
             width: 100%;
             padding: 10px 12px;
-            border: 2px solid #dee2e6;
-            border-radius: 8px;
-            font-size: 15px;
-        }
-        .input-group input:focus {
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1em;
             outline: none;
+            transition: border-color 0.3s;
+            background: #fff;
+        }
+
+        .input-group input[type="number"]:focus {
             border-color: #667eea;
         }
+
+        .input-group input.hidden-value {
+            color: transparent;
+            background: #f0f0f0;
+        }
+
+        .input-group input.hidden-value:focus {
+            color: #333;
+            background: #fff;
+        }
+
+        /* Slider */
+        .slider-container {
+            margin-top: 5px;
+        }
+
+        .slider-container input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #e0e0e0;
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .slider-container input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(102, 126, 234, 0.4);
+        }
+
+        .slider-container input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            cursor: pointer;
+            border: none;
+        }
+
+        /* Calculate Button */
         .btn-calculate {
             width: 100%;
-            padding: 15px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            padding: 16px;
+            margin: 20px 0 25px;
             border: none;
             border-radius: 12px;
-            font-size: 18px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #fff;
+            font-size: 1.15em;
             font-weight: 600;
             cursor: pointer;
-            margin-bottom: 30px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
         }
+
         .btn-calculate:hover {
-            opacity: 0.9;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
         }
-        .results {
+
+        /* Results Section */
+        .results-section {
             display: none;
         }
-        .results.show {
+
+        .results-section.active {
             display: block;
+            animation: fadeInUp 0.5s ease;
         }
-        .result-grid {
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Results Cards - All same background */
+        .results-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 15px;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
         }
+
+        @media (max-width: 600px) {
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
         .result-card {
-            background: #f8f9fa;
-            border-radius: 12px;
-            padding: 20px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 15px;
+            padding: 20px 15px;
             text-align: center;
-            border: 1px solid #dee2e6;
+            transition: transform 0.3s;
+            color: #fff;
         }
-        .result-card.highlight {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+
+        .result-card:hover {
+            transform: translateY(-3px);
         }
+
         .result-card .label {
-            font-size: 12px;
-            color: #6c757d;
+            font-size: 0.9em;
             margin-bottom: 8px;
-            font-weight: 600;
+            opacity: 0.9;
         }
-        .result-card.highlight .label { color: rgba(255,255,255,0.8); }
+
         .result-card .value {
-            font-size: 24px;
+            font-size: 1.8em;
             font-weight: 700;
-            color: #212529;
         }
-        .result-card.highlight .value { color: white; }
-        .detail-table {
+
+        /* Parameters Table */
+        .params-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 20px;
-            font-size: 14px;
+            margin-bottom: 25px;
+            font-size: 0.95em;
         }
-        .detail-table th {
-            background: #495057;
-            color: white;
-            padding: 12px;
+
+        .params-table thead {
+            background: #4a5568;
+            color: #fff;
+        }
+
+        .params-table th,
+        .params-table td {
+            padding: 12px 10px;
+            text-align: center;
+        }
+
+        .params-table th {
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+
+        .params-table tbody tr {
+            border-bottom: 1px solid #e0e0e0;
+            transition: background 0.2s;
+        }
+
+        .params-table tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+        .params-table tbody tr:last-child {
+            border-bottom: none;
+        }
+
+        .params-table td {
+            color: #333;
+        }
+
+        .params-table td.param-name {
+            font-weight: 600;
+            color: #2d3748;
             text-align: left;
+            padding-left: 15px;
         }
-        .detail-table td {
-            padding: 12px;
-            border-bottom: 1px solid #dee2e6;
+
+        .params-table td.diff {
+            color: #e53e3e;
+            font-weight: 600;
         }
-        .detail-table tr:nth-child(even) { background: #f8f9fa; }
-        .comparison-bar {
+
+        /* Visualization Section */
+        .viz-section {
             margin-top: 20px;
             padding: 20px;
             background: #f8f9fa;
-            border-radius: 12px;
+            border-radius: 15px;
         }
-        .comparison-bar h4 {
+
+        .viz-section h3 {
+            color: #667eea;
             margin-bottom: 15px;
-            color: #495057;
+            font-size: 1.1em;
+            text-align: center;
         }
-        .bar-item {
-            display: flex;
-            align-items: center;
-            margin-bottom: 10px;
+
+        .viz-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
         }
-        .bar-label {
-            width: 100px;
-            font-size: 13px;
-            color: #6c757d;
+
+        @media (max-width: 600px) {
+            .viz-grid {
+                grid-template-columns: 1fr;
+            }
         }
-        .bar-track {
-            flex: 1;
+
+        .viz-item {
+            text-align: center;
+        }
+
+        .viz-item .viz-label {
+            font-size: 0.85em;
+            color: #666;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .viz-bar-container {
+            background: #e0e0e0;
+            border-radius: 10px;
             height: 30px;
-            background: #dee2e6;
-            border-radius: 15px;
             overflow: hidden;
+            position: relative;
         }
-        .bar-fill {
+
+        .viz-bar {
             height: 100%;
-            border-radius: 15px;
+            border-radius: 10px;
+            transition: width 0.8s ease;
             display: flex;
             align-items: center;
             justify-content: flex-end;
             padding-right: 10px;
-            color: white;
-            font-size: 12px;
+            font-size: 0.85em;
             font-weight: 600;
+            color: #fff;
         }
-        .bar-fill.cmc { background: #e74c3c; }
-        .bar-fill.phi { background: #3498db; }
-        .bar-fill.cie { background: #2ecc71; }
-        @media (max-width: 768px) {
-            .input-section { grid-template-columns: 1fr; }
-            .result-grid { grid-template-columns: 1fr; }
+
+        .viz-bar.phi-bar { background: linear-gradient(90deg, #667eea, #764ba2); }
+        .viz-bar.cmc-bar { background: linear-gradient(90deg, #48bb78, #38a169); }
+        .viz-bar.cie-bar { background: linear-gradient(90deg, #ed8936, #dd6b20); }
+
+        .viz-colors {
+            display: flex;
+            justify-content: center;
+            gap: 0;
+            margin-top: 15px;
+        }
+
+        .viz-color-box {
+            flex: 1;
+            height: 80px;
+            border: none;
+        }
+
+        .viz-color-box:first-child {
+            border-radius: 0;
+        }
+
+        .viz-color-box:last-child {
+            border-radius: 0;
+        }
+
+        /* Formula Section */
+        .formula-section {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            font-size: 0.85em;
+            color: #666;
+            line-height: 1.8;
+        }
+
+        .formula-section h4 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 1em;
+        }
+
+        .formula-section code {
+            background: #fff;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            color: #764ba2;
         }
     </style>
+<base target="_blank">
 </head>
 <body>
     <div class="container">
         <div class="header">
             <h1>色差计算工具</h1>
-            <p>CMC(l:c) | φ空间感知均匀化 | CIEDE2000</p>
+            <p class="subtitle">φ空间感知均匀化 | CMC(l:c) | CIEDE2000</p>
         </div>
-        <div class="content">
+
+        <div class="main-card">
+            <!-- Color Preview Section - Large, no border-radius, no text -->
+            <div class="preview-section">
+                <div class="preview-wrapper">
+                    <div class="color-preview-box" id="preview1"></div>
+                    <div class="color-preview-box" id="preview2"></div>
+                </div>
+            </div>
+
+            <!-- Input Section -->
             <div class="input-section">
-                <div class="color-box">
-                    <h3>
-                        <span class="color-preview" id="preview1" style="background:rgb(128,0,0)"></span>
-                        标样 (Standard)
-                    </h3>
+                <div class="color-card">
+                    <div class="color-header">
+                        <h3>🔴 标样 (Standard)</h3>
+                        <button class="btn-random" onclick="randomizeStandard()">🎲 随机</button>
+                    </div>
                     <div class="input-group">
                         <label>L* (明度, 0-100)</label>
-                        <input type="number" id="L1" value="50" step="0.1">
+                        <input type="number" id="L1" value="50" min="0" max="100" step="0.1">
                     </div>
                     <div class="input-group">
                         <label>a* (绿-红)</label>
-                        <input type="number" id="a1" value="30" step="0.1">
+                        <input type="number" id="a1" value="30" min="-128" max="127" step="0.1">
                     </div>
                     <div class="input-group">
                         <label>b* (蓝-黄)</label>
-                        <input type="number" id="b1" value="0" step="0.1">
+                        <input type="number" id="b1" value="0" min="-128" max="127" step="0.1">
                     </div>
                 </div>
-                <div class="color-box">
-                    <h3>
-                        <span class="color-preview" id="preview2" style="background:rgb(128,30,0)"></span>
-                        样品 (Sample)
-                    </h3>
+
+                <div class="color-card">
+                    <div class="color-header">
+                        <h3>🟢 样品 (Sample)</h3>
+                    </div>
                     <div class="input-group">
                         <label>L* (明度, 0-100)</label>
-                        <input type="number" id="L2" value="50" step="0.1">
+                        <input type="number" id="L2" value="50" min="0" max="100" step="0.1">
+                        <div class="slider-container">
+                            <input type="range" id="L2_slider" min="0" max="100" value="50" step="0.1">
+                        </div>
                     </div>
                     <div class="input-group">
                         <label>a* (绿-红)</label>
-                        <input type="number" id="a2" value="30" step="0.1">
+                        <input type="number" id="a2" value="30" min="-128" max="127" step="0.1">
+                        <div class="slider-container">
+                            <input type="range" id="a2_slider" min="-128" max="127" value="30" step="0.1">
+                        </div>
                     </div>
                     <div class="input-group">
                         <label>b* (蓝-黄)</label>
-                        <input type="number" id="b2" value="10" step="0.1">
+                        <input type="number" id="b2" value="10" min="-128" max="127" step="0.1">
+                        <div class="slider-container">
+                            <input type="range" id="b2_slider" min="-128" max="127" value="10" step="0.1">
+                        </div>
                     </div>
                 </div>
             </div>
-            <button class="btn-calculate" id="calcBtn">计算色差</button>
-            <div class="results" id="results">
-                <div class="result-grid">
-                    <div class="result-card highlight">
-                        <div class="label">CMC 色差</div>
-                        <div class="value" id="cmc-result">-</div>
-                    </div>
+
+            <button class="btn-calculate" onclick="calculate()">计算色差</button>
+
+            <!-- Results Section -->
+            <div id="results" class="results-section">
+                <!-- Results Cards: Phi first, same background -->
+                <div class="results-grid">
                     <div class="result-card">
                         <div class="label">φ空间色差</div>
-                        <div class="value" id="phi-result">-</div>
+                        <div class="value" id="de_phi">-</div>
+                    </div>
+                    <div class="result-card">
+                        <div class="label">CMC 色差</div>
+                        <div class="value" id="de_cmc">-</div>
                     </div>
                     <div class="result-card">
                         <div class="label">CIEDE2000</div>
-                        <div class="value" id="cie-result">-</div>
+                        <div class="value" id="de_cie">-</div>
                     </div>
                 </div>
-                <table class="detail-table">
+
+                <!-- Parameters Table -->
+                <table class="params-table">
                     <thead>
-                        <tr><th>参数</th><th>标样</th><th>样品</th><th>差值</th></tr>
+                        <tr>
+                            <th style="text-align:left;padding-left:15px;">参数</th>
+                            <th>标样</th>
+                            <th>样品</th>
+                            <th>差值</th>
+                        </tr>
                     </thead>
                     <tbody>
-                        <tr><td><strong>色相角 h</strong></td><td id="h1-val">-</td><td id="h2-val">-</td><td id="dh-val">-</td></tr>
-                        <tr><td><strong>新色相角 φ</strong></td><td id="phi1-val">-</td><td id="phi2-val">-</td><td id="dphi-val">-</td></tr>
-                        <tr><td><strong>彩度 C</strong></td><td id="C1-val">-</td><td id="C2-val">-</td><td id="dC-val">-</td></tr>
-                        <tr><td><strong>明度 L</strong></td><td id="L1-d">-</td><td id="L2-d">-</td><td id="dL-val">-</td></tr>
+                        <tr>
+                            <td class="param-name">色相角 h</td>
+                            <td id="h1_val">-</td>
+                            <td id="h2_val">-</td>
+                            <td class="diff" id="dh_val">-</td>
+                        </tr>
+                        <tr>
+                            <td class="param-name">新色相角 φ</td>
+                            <td id="phi1_val">-</td>
+                            <td id="phi2_val">-</td>
+                            <td class="diff" id="dphi_val">-</td>
+                        </tr>
+                        <tr>
+                            <td class="param-name">彩度 C</td>
+                            <td id="C1_val">-</td>
+                            <td id="C2_val">-</td>
+                            <td class="diff" id="dC_val">-</td>
+                        </tr>
+                        <tr>
+                            <td class="param-name">明度 L</td>
+                            <td id="L1_disp">-</td>
+                            <td id="L2_disp">-</td>
+                            <td class="diff" id="dL_val">-</td>
+                        </tr>
                     </tbody>
                 </table>
-                <div class="comparison-bar">
-                    <h4>色差对比可视化</h4>
-                    <div class="bar-item">
-                        <div class="bar-label">CMC</div>
-                        <div class="bar-track"><div class="bar-fill cmc" id="bar-cmc" style="width:0%">0</div></div>
+
+                <!-- Visualization Section -->
+                <div class="viz-section">
+                    <h3>📊 色差可视化比较</h3>
+                    <div class="viz-grid">
+                        <div class="viz-item">
+                            <div class="viz-label">φ空间色差</div>
+                            <div class="viz-bar-container">
+                                <div class="viz-bar phi-bar" id="bar_phi">0</div>
+                            </div>
+                        </div>
+                        <div class="viz-item">
+                            <div class="viz-label">CMC 色差</div>
+                            <div class="viz-bar-container">
+                                <div class="viz-bar cmc-bar" id="bar_cmc">0</div>
+                            </div>
+                        </div>
+                        <div class="viz-item">
+                            <div class="viz-label">CIEDE2000</div>
+                            <div class="viz-bar-container">
+                                <div class="viz-bar cie-bar" id="bar_cie">0</div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="bar-item">
-                        <div class="bar-label">φ空间</div>
-                        <div class="bar-track"><div class="bar-fill phi" id="bar-phi" style="width:0%">0</div></div>
-                    </div>
-                    <div class="bar-item">
-                        <div class="bar-label">CIEDE2000</div>
-                        <div class="bar-track"><div class="bar-fill cie" id="bar-cie" style="width:0%">0</div></div>
+                    <div class="viz-colors">
+                        <div class="viz-color-box" id="viz_color1"></div>
+                        <div class="viz-color-box" id="viz_color2"></div>
                     </div>
                 </div>
+            </div>
+
+            <div class="formula-section">
+                <h4>核心公式</h4>
+                <p>
+                    <code>I(h,C) = T(h)·f(C) + 1 - f(C)</code><br>
+                    <code>φ(h,C) = K(C) ∫₀ʰ dθ/I(θ,C)</code>, &nbsp;&nbsp;<code>K(C) = 2π/∫₀²π dθ/I(θ,C)</code><br>
+                    <strong>修正:</strong> <code>h_mid = h + Δh/2</code>, &nbsp;&nbsp;<code>φ_mid = φ(h_mid, C)</code><br>
+                    <code>ΔE_CMC(φ) = √[(ΔL/S_L)² + (ΔC/S_C)² + (K₀·|φ₂-φ₁|)²]</code>
+                </p>
             </div>
         </div>
     </div>
 
     <script>
-        // LAB to RGB for preview
-        function labToRgb(L, a, b) {
-            let y = (L + 16) / 116;
-            let x = a / 500 + y;
-            let z = y - b / 200;
-            x = 0.95047 * ((x > 0.206897) ? x*x*x : (x - 16/116) / 7.787);
-            y = 1.00000 * ((y > 0.206897) ? y*y*y : (y - 16/116) / 7.787);
-            z = 1.08883 * ((z > 0.206897) ? z*z*z : (z - 16/116) / 7.787);
-            let r = x *  3.2406 + y * -1.5372 + z * -0.4986;
-            let g = x * -0.9689 + y *  1.8758 + z *  0.0415;
-            let bl = x *  0.0557 + y * -0.2040 + z *  1.0570;
-            r = (r > 0.0031308) ? (1.055 * Math.pow(r, 1/2.4) - 0.055) : 12.92 * r;
-            g = (g > 0.0031308) ? (1.055 * Math.pow(g, 1/2.4) - 0.055) : 12.92 * g;
-            bl = (bl > 0.0031308) ? (1.055 * Math.pow(bl, 1/2.4) - 0.055) : 12.92 * bl;
-            return `rgb(${Math.max(0,Math.min(255,Math.round(r*255)))},${Math.max(0,Math.min(255,Math.round(g*255)))},${Math.max(0,Math.min(255,Math.round(bl*255)))}`;
+        // ========== CMC Formula Functions ==========
+        function T_func(h) {
+            h = ((h % 360) + 360) % 360;
+            if (h > 164 && h <= 345) {
+                return 0.56 + Math.abs(0.2 * Math.cos((h + 168) * Math.PI / 180));
+            }
+            return 0.36 + Math.abs(0.4 * Math.cos((h + 35) * Math.PI / 180));
         }
+
+        function f_func(C) {
+            return Math.sqrt(Math.pow(C, 4) / (Math.pow(C, 4) + 1900));
+        }
+
+        function Sc_func(C) {
+            return 0.0638 * C / (1 + 0.0131 * C) + 0.638;
+        }
+
+        function Sl_func(L) {
+            return 0.040975 * L / (1 + 0.01765 * L);
+        }
+
+        // LAB to LCH
+        function lab_to_lch(L, a, b) {
+            const C = Math.sqrt(a*a + b*b);
+            let h = Math.atan2(b, a) * 180 / Math.PI;
+            h = ((h % 360) + 360) % 360;
+            return {L, C, h};
+        }
+
+        // LAB to XYZ
+        function lab_to_xyz(L, a, b) {
+            const Xn = 95.047, Yn = 100.0, Zn = 108.883;
+            const fy = (L + 16) / 116;
+            const fx = a / 500 + fy;
+            const fz = fy - b / 200;
+            const delta = 6/29;
+            function f_inv(t) {
+                return t > delta ? Math.pow(t, 3) : 3 * delta * delta * (t - 4/29);
+            }
+            return {X: Xn * f_inv(fx), Y: Yn * f_inv(fy), Z: Zn * f_inv(fz)};
+        }
+
+        // XYZ to RGB
+        function xyz_to_rgb(X, Y, Z) {
+            const M = [
+                [3.2404542, -1.5371385, -0.4985314],
+                [-0.9692660, 1.8760108, 0.0415560],
+                [0.0556434, -0.2040259, 1.0572252]
+            ];
+            const xyz = [X/100, Y/100, Z/100];
+            const rgb_lin = [
+                M[0][0]*xyz[0] + M[0][1]*xyz[1] + M[0][2]*xyz[2],
+                M[1][0]*xyz[0] + M[1][1]*xyz[1] + M[1][2]*xyz[2],
+                M[2][0]*xyz[0] + M[2][1]*xyz[1] + M[2][2]*xyz[2]
+            ];
+            function gamma(c) {
+                return c > 0.0031308 ? 1.055 * Math.pow(c, 1/2.4) - 0.055 : 12.92 * c;
+            }
+            return {
+                r: Math.max(0, Math.min(1, gamma(rgb_lin[0]))),
+                g: Math.max(0, Math.min(1, gamma(rgb_lin[1]))),
+                b: Math.max(0, Math.min(1, gamma(rgb_lin[2])))
+            };
+        }
+
+        // LAB to RGB for preview
+        function lab_to_rgb(L, a, b) {
+            const xyz = lab_to_xyz(L, a, b);
+            return xyz_to_rgb(xyz.X, xyz.Y, xyz.Z);
+        }
+
+        // Compute phi with numerical integration
+        function compute_phi(h_deg, C) {
+            const N = 5000;
+            const h_int = [];
+            const I_vals = [];
+            for (let i = 0; i < N; i++) {
+                const theta = (i / (N-1)) * 2 * Math.PI;
+                h_int.push(theta);
+                const h_deg_i = theta * 180 / Math.PI;
+                I_vals.push(1.0 / (T_func(h_deg_i) * f_func(C) + 1 - f_func(C)));
+            }
+
+            const cum = [];
+            let sum = 0;
+            const dh = 2 * Math.PI / (N - 1);
+            for (let i = 0; i < N; i++) {
+                if (i > 0) {
+                    sum += (I_vals[i-1] + I_vals[i]) / 2 * dh;
+                }
+                cum.push(sum);
+            }
+
+            const K = 2 * Math.PI / cum[N-1];
+            const h_rad = h_deg * Math.PI / 180;
+
+            let idx = 0;
+            for (let i = 0; i < N-1; i++) {
+                if (h_int[i] <= h_rad && h_rad <= h_int[i+1]) {
+                    idx = i;
+                    break;
+                }
+            }
+            const t = (h_rad - h_int[idx]) / (h_int[idx+1] - h_int[idx]);
+            return K * (cum[idx] + t * (cum[idx+1] - cum[idx]));
+        }
+
+        // Compute phi with midpoint correction
+        function compute_phi_mid(h_deg, C, dh) {
+            const h_mid = ((h_deg + dh / 2) % 360 + 360) % 360;
+            return compute_phi(h_mid, C);
+        }
+
+        // Original CMC color difference
+        function delta_E_cmc(L1, a1, b1, L2, a2, b2) {
+            const c1 = lab_to_lch(L1, a1, b1);
+            const c2 = lab_to_lch(L2, a2, b2);
+
+            const dL = c2.L - c1.L;
+            const dC = c2.C - c1.C;
+
+            let dh = c2.h - c1.h;
+            if (Math.abs(dh) > 180) {
+                dh = dh > 0 ? dh - 360 : dh + 360;
+            }
+
+            const dH = 2 * Math.sqrt(c1.C * c2.C) * Math.sin(dh * Math.PI / 360);
+
+            const Sc = Sc_func(c2.C);
+            const Sl = Sl_func(c2.L);
+            const T = T_func(c2.h);
+            const f = f_func(c2.C);
+            const Sh = Sc * (T * f + 1 - f);
+
+            return Math.sqrt(Math.pow(dL / (2 * Sl), 2) + Math.pow(dC / Sc, 2) + Math.pow(dH / Sh, 2));
+        }
+
+        // Phi-space CMC color difference
+        function delta_E_phi(L1, a1, b1, L2, a2, b2) {
+            const c1 = lab_to_lch(L1, a1, b1);
+            const c2 = lab_to_lch(L2, a2, b2);
+
+            const dL = c2.L - c1.L;
+            const dC = c2.C - c1.C;
+
+            let dh = c2.h - c1.h;
+            if (Math.abs(dh) > 180) {
+                dh = dh > 0 ? dh - 360 : dh + 360;
+            }
+
+            const phi1 = compute_phi_mid(c1.h, c1.C, dh);
+            const phi2 = compute_phi_mid(c2.h, c2.C, dh);
+
+            let dphi = phi2 - phi1;
+            if (Math.abs(dphi) > Math.PI) {
+                dphi = dphi > 0 ? dphi - 2*Math.PI : dphi + 2*Math.PI;
+            }
+
+            const C_avg = (c1.C + c2.C) / 2;
+            const Sc = Sc_func(c2.C);
+
+            // Compute K(C2)
+            const N = 5000;
+            const h_int = [];
+            const I_vals = [];
+            for (let i = 0; i < N; i++) {
+                const theta = (i / (N-1)) * 2 * Math.PI;
+                h_int.push(theta);
+                const h_deg_i = theta * 180 / Math.PI;
+                I_vals.push(1.0 / (T_func(h_deg_i) * f_func(c2.C) + 1 - f_func(c2.C)));
+            }
+            let sum = 0;
+            const dh_step = 2 * Math.PI / (N - 1);
+            for (let i = 1; i < N; i++) {
+                sum += (I_vals[i-1] + I_vals[i]) / 2 * dh_step;
+            }
+            const K_val = 2 * Math.PI / sum;
+
+            const K0 = C_avg / (Sc * K_val);
+            const dH_phi = K0 * Math.abs(dphi);
+
+            const Sl = Sl_func(c2.L);
+
+            return Math.sqrt(Math.pow(dL / (2 * Sl), 2) + Math.pow(dC / Sc, 2) + Math.pow(dH_phi, 2));
+        }
+
+        // CIEDE2000 color difference (simplified)
+        function delta_E_cie2000(L1, a1, b1, L2, a2, b2) {
+            const c1 = lab_to_lch(L1, a1, b1);
+            const c2 = lab_to_lch(L2, a2, b2);
+
+            const dL = c2.L - c1.L;
+            const dC = c2.C - c1.C;
+
+            let dh = c2.h - c1.h;
+            if (Math.abs(dh) > 180) {
+                dh = dh > 0 ? dh - 360 : dh + 360;
+            }
+            const dH = 2 * Math.sqrt(c1.C * c2.C) * Math.sin(dh * Math.PI / 360);
+
+            const C_avg = (c1.C + c2.C) / 2;
+            const SL = 1 + 0.015 * Math.pow((c1.L + c2.L)/2 - 50, 2) / Math.sqrt(20 + Math.pow((c1.L + c2.L)/2 - 50, 2));
+            const SC = 1 + 0.045 * C_avg;
+            const SH = 1 + 0.015 * C_avg;
+
+            const RT = -2 * Math.sqrt(Math.pow(C_avg, 7) / (Math.pow(C_avg, 7) + Math.pow(25, 7))) * 
+                       Math.sin((30 * Math.PI / 180) * Math.exp(-Math.pow((c1.h + c2.h)/2 - 275, 2) / Math.pow(25, 2)));
+
+            return Math.sqrt(Math.pow(dL/SL, 2) + Math.pow(dC/SC, 2) + Math.pow(dH/SH, 2) + RT * (dC/SC) * (dH/SH));
+        }
+
+        // ========== UI Functions ==========
+
+        let isRandomized = false;
 
         function updatePreview() {
             const L1 = parseFloat(document.getElementById('L1').value) || 0;
@@ -307,210 +834,168 @@
             const L2 = parseFloat(document.getElementById('L2').value) || 0;
             const a2 = parseFloat(document.getElementById('a2').value) || 0;
             const b2 = parseFloat(document.getElementById('b2').value) || 0;
-            document.getElementById('preview1').style.background = labToRgb(L1, a1, b1);
-            document.getElementById('preview2').style.background = labToRgb(L2, a2, b2);
+
+            const rgb1 = lab_to_rgb(L1, a1, b1);
+            const rgb2 = lab_to_rgb(L2, a2, b2);
+
+            document.getElementById('preview1').style.backgroundColor = 
+                `rgb(${Math.round(rgb1.r*255)}, ${Math.round(rgb1.g*255)}, ${Math.round(rgb1.b*255)})`;
+            document.getElementById('preview2').style.backgroundColor = 
+                `rgb(${Math.round(rgb2.r*255)}, ${Math.round(rgb2.g*255)}, ${Math.round(rgb2.b*255)})`;
         }
 
-        ['L1','a1','b1','L2','a2','b2'].forEach(id => {
-            document.getElementById(id).addEventListener('input', updatePreview);
-        });
+        function randomizeStandard() {
+            // Generate random LAB values
+            const L = Math.round((Math.random() * 80 + 10) * 10) / 10;
+            const a = Math.round((Math.random() * 160 - 80) * 10) / 10;
+            const b = Math.round((Math.random() * 160 - 80) * 10) / 10;
 
-        function computeT(h) {
-            while (h < 0) h += 360;
-            while (h >= 360) h -= 360;
-            if (h >= 164 && h <= 345) {
-                return 0.56 + Math.abs(0.2 * Math.cos((h + 168) * Math.PI / 180));
-            }
-            return 0.36 + Math.abs(0.4 * Math.cos((h + 35) * Math.PI / 180));
+            // Set values but hide them visually
+            const L1_input = document.getElementById('L1');
+            const a1_input = document.getElementById('a1');
+            const b1_input = document.getElementById('b1');
+
+            L1_input.value = L;
+            a1_input.value = a;
+            b1_input.value = b;
+
+            // Add hidden class to hide values
+            L1_input.classList.add('hidden-value');
+            a1_input.classList.add('hidden-value');
+            b1_input.classList.add('hidden-value');
+
+            // Update preview with random color
+            isRandomized = true;
+            updatePreview();
+
+            // Hide results
+            document.getElementById('results').classList.remove('active');
         }
 
-        function computeF(C) {
-            return Math.sqrt(Math.pow(C, 4) / (Math.pow(C, 4) + 1900));
+        // Show values on focus
+        function setupHiddenInputs() {
+            ['L1', 'a1', 'b1'].forEach(id => {
+                const input = document.getElementById(id);
+                input.addEventListener('focus', () => {
+                    input.classList.remove('hidden-value');
+                });
+                input.addEventListener('blur', () => {
+                    if (isRandomized) {
+                        input.classList.add('hidden-value');
+                    }
+                });
+                input.addEventListener('input', () => {
+                    isRandomized = false;
+                    input.classList.remove('hidden-value');
+                    updatePreview();
+                });
+            });
         }
 
-        function computeSC(C) {
-            return 0.0638 * C / (1 + 0.0131 * C) + 0.638;
-        }
+        // Sync sliders and number inputs
+        function syncInputs() {
+            const sliders = ['L2', 'a2', 'b2'];
+            sliders.forEach(id => {
+                const numInput = document.getElementById(id);
+                const slider = document.getElementById(id + '_slider');
 
-        function computeSL(L) {
-            return L < 16 ? 0.511 : 0.040975 * L / (1 + 0.01765 * L);
-        }
+                numInput.addEventListener('input', () => {
+                    slider.value = numInput.value;
+                    updatePreview();
+                });
 
-        const phiCache = {};
-        function getPhiLUT(C) {
-            const key = Math.round(C * 10);
-            if (phiCache[key]) return phiCache[key];
-            const n = 5000;
-            const hVals = [];
-            for (let i = 0; i < n; i++) hVals.push(i * 360 / (n - 1));
-            const f = computeF(C);
-            let I = 0;
-            const dh = 2 * Math.PI / (n - 1);
-            const phiVals = [0];
-            for (let i = 1; i < n; i++) {
-                const g1 = f * computeT(hVals[i-1]) + (1 - f);
-                const g2 = f * computeT(hVals[i]) + (1 - f);
-                I += 0.5 * (1/g1 + 1/g2) * dh;
-                phiVals.push(I);
-            }
-            const K = 2 * Math.PI / I;
-            for (let i = 0; i < n; i++) phiVals[i] *= K;
-            phiCache[key] = { hVals, phiVals, K };
-            return phiCache[key];
-        }
-
-        function hToPhi(h, C) {
-            const lut = getPhiLUT(C);
-            const { hVals, phiVals } = lut;
-            for (let i = 0; i < hVals.length - 1; i++) {
-                if (hVals[i] <= h && h <= hVals[i+1]) {
-                    const t = (h - hVals[i]) / (hVals[i+1] - hVals[i]);
-                    return phiVals[i] + t * (phiVals[i+1] - phiVals[i]);
-                }
-            }
-            return phiVals[phiVals.length - 1];
-        }
-
-        function deltaE_CMC(L1, a1, b1, L2, a2, b2) {
-            const C1 = Math.sqrt(a1*a1 + b1*b1);
-            const C2 = Math.sqrt(a2*a2 + b2*b2);
-            let h1 = Math.atan2(b1, a1) * 180 / Math.PI;
-            if (h1 < 0) h1 += 360;
-            const dL = L2 - L1;
-            const dC = C2 - C1;
-            const dEab = Math.sqrt(Math.pow(L2-L1, 2) + Math.pow(a2-a1, 2) + Math.pow(b2-b1, 2));
-            const dH = Math.sqrt(Math.max(0, dEab*dEab - dL*dL - dC*dC));
-            const SL = computeSL(L1);
-            const SC = computeSC(C1);
-            const f = computeF(C1);
-            const T = computeT(h1);
-            const SH = SC * (f * T + (1 - f));
-            return Math.sqrt(Math.pow(dL/(2*SL), 2) + Math.pow(dC/(1*SC), 2) + Math.pow(dH/SH, 2));
-        }
-
-        function deltaE_Phi(L1, a1, b1, L2, a2, b2) {
-            const C1 = Math.sqrt(a1*a1 + b1*b1);
-            const C2 = Math.sqrt(a2*a2 + b2*b2);
-            let h1 = Math.atan2(b1, a1) * 180 / Math.PI;
-            if (h1 < 0) h1 += 360;
-            let h2 = Math.atan2(b2, a2) * 180 / Math.PI;
-            if (h2 < 0) h2 += 360;
-            const Cavg = (C1 + C2) / 2;
-            const phi1 = hToPhi(h1, Cavg);
-            const phi2 = hToPhi(h2, Cavg);
-            let dPhi = Math.abs(phi2 - phi1);
-            if (dPhi > Math.PI) dPhi = 2 * Math.PI - dPhi;
-            const lut = getPhiLUT(Cavg);
-            const SC = computeSC(Cavg);
-            const Sphi = SC * lut.K / Cavg;
-            const dL = L2 - L1;
-            const dC = C2 - C1;
-            const SL = computeSL(L1);
-            return Math.sqrt(Math.pow(dL/(2*SL), 2) + Math.pow(dC/(1*SC), 2) + Math.pow(dPhi/Sphi, 2));
-        }
-
-        function deltaE_CIE2000(L1, a1, b1, L2, a2, b2) {
-            const C1 = Math.sqrt(a1*a1 + b1*b1);
-            const C2 = Math.sqrt(a2*a2 + b2*b2);
-            const Cavg = (C1 + C2) / 2;
-            const G = 0.5 * (1 - Math.sqrt(Math.pow(Cavg, 7) / (Math.pow(Cavg, 7) + Math.pow(25, 7))));
-            const a1p = a1 * (1 + G);
-            const a2p = a2 * (1 + G);
-            const C1p = Math.sqrt(a1p*a1p + b1*b1);
-            const C2p = Math.sqrt(a2p*a2p + b2*b2);
-            const Cavgp = (C1p + C2p) / 2;
-            let h1p = Math.atan2(b1, a1p) * 180 / Math.PI;
-            if (h1p < 0) h1p += 360;
-            let h2p = Math.atan2(b2, a2p) * 180 / Math.PI;
-            if (h2p < 0) h2p += 360;
-            const dLp = L2 - L1;
-            const dCp = C2p - C1p;
-            let dhp = h2p - h1p;
-            if (Math.abs(dhp) > 180) dhp += (h2p <= h1p) ? 360 : -360;
-            const dHp = 2 * Math.sqrt(C1p * C2p) * Math.sin(dhp * Math.PI / 360);
-            const Lavg = (L1 + L2) / 2;
-            const SL = 1 + 0.015 * Math.pow(Lavg - 50, 2) / Math.sqrt(20 + Math.pow(Lavg - 50, 2));
-            const SC = 1 + 0.045 * Cavgp;
-            let havg = (h1p + h2p) / 2;
-            if (Math.abs(h1p - h2p) > 180) havg += 180;
-            if (havg >= 360) havg -= 360;
-            const T = 1 - 0.17 * Math.cos((havg - 30) * Math.PI / 180)
-                    + 0.24 * Math.cos(2 * havg * Math.PI / 180)
-                    + 0.32 * Math.cos((3 * havg + 6) * Math.PI / 180)
-                    - 0.20 * Math.cos((4 * havg - 63) * Math.PI / 180);
-            const SH = 1 + 0.015 * Cavgp * T;
-            const RT = -2 * Math.sqrt(Math.pow(Cavgp, 7) / (Math.pow(Cavgp, 7) + Math.pow(25, 7)))
-                     * Math.sin(60 * Math.exp(-Math.pow((havg - 275) / 25, 2)) * Math.PI / 180);
-            return Math.sqrt(
-                Math.pow(dLp / SL, 2) +
-                Math.pow(dCp / SC, 2) +
-                Math.pow(dHp / SH, 2) +
-                RT * (dCp / SC) * (dHp / SH)
-            );
+                slider.addEventListener('input', () => {
+                    numInput.value = slider.value;
+                    updatePreview();
+                });
+            });
         }
 
         function calculate() {
-            console.log('Calculating...');
-            const L1 = parseFloat(document.getElementById('L1').value) || 0;
-            const a1 = parseFloat(document.getElementById('a1').value) || 0;
-            const b1 = parseFloat(document.getElementById('b1').value) || 0;
-            const L2 = parseFloat(document.getElementById('L2').value) || 0;
-            const a2 = parseFloat(document.getElementById('a2').value) || 0;
-            const b2 = parseFloat(document.getElementById('b2').value) || 0;
+            // Show hidden values when calculating
+            if (isRandomized) {
+                document.getElementById('L1').classList.remove('hidden-value');
+                document.getElementById('a1').classList.remove('hidden-value');
+                document.getElementById('b1').classList.remove('hidden-value');
+            }
 
-            const C1 = Math.sqrt(a1*a1 + b1*b1);
-            const C2 = Math.sqrt(a2*a2 + b2*b2);
-            let h1 = Math.atan2(b1, a1) * 180 / Math.PI;
-            if (h1 < 0) h1 += 360;
-            let h2 = Math.atan2(b2, a2) * 180 / Math.PI;
-            if (h2 < 0) h2 += 360;
+            const L1 = parseFloat(document.getElementById('L1').value);
+            const a1 = parseFloat(document.getElementById('a1').value);
+            const b1 = parseFloat(document.getElementById('b1').value);
+            const L2 = parseFloat(document.getElementById('L2').value);
+            const a2 = parseFloat(document.getElementById('a2').value);
+            const b2 = parseFloat(document.getElementById('b2').value);
 
-            const Cavg = (C1 + C2) / 2;
-            const phi1 = hToPhi(h1, Cavg);
-            const phi2 = hToPhi(h2, Cavg);
+            if ([L1, a1, b1, L2, a2, b2].some(v => isNaN(v))) {
+                alert('请输入有效的数值');
+                return;
+            }
 
-            let dh = Math.abs(h2 - h1);
-            if (dh > 180) dh = 360 - dh;
-            let dphi = Math.abs(phi2 - phi1);
-            if (dphi > Math.PI) dphi = 2 * Math.PI - dphi;
+            const c1 = lab_to_lch(L1, a1, b1);
+            const c2 = lab_to_lch(L2, a2, b2);
 
-            const cmc = deltaE_CMC(L1, a1, b1, L2, a2, b2);
-            const phi = deltaE_Phi(L1, a1, b1, L2, a2, b2);
-            const cie = deltaE_CIE2000(L1, a1, b1, L2, a2, b2);
+            let dh = c2.h - c1.h;
+            if (Math.abs(dh) > 180) {
+                dh = dh > 0 ? dh - 360 : dh + 360;
+            }
 
-            document.getElementById('cmc-result').textContent = cmc.toFixed(4);
-            document.getElementById('phi-result').textContent = phi.toFixed(4);
-            document.getElementById('cie-result').textContent = cie.toFixed(4);
+            const phi1 = compute_phi_mid(c1.h, c1.C, dh);
+            const phi2 = compute_phi_mid(c2.h, c2.C, dh);
 
-            document.getElementById('h1-val').textContent = h1.toFixed(2) + '°';
-            document.getElementById('h2-val').textContent = h2.toFixed(2) + '°';
-            document.getElementById('dh-val').textContent = dh.toFixed(2) + '°';
+            let dphi = phi2 - phi1;
+            if (Math.abs(dphi) > Math.PI) {
+                dphi = dphi > 0 ? dphi - 2*Math.PI : dphi + 2*Math.PI;
+            }
 
-            document.getElementById('phi1-val').textContent = (phi1 * 180 / Math.PI).toFixed(2) + '°';
-            document.getElementById('phi2-val').textContent = (phi2 * 180 / Math.PI).toFixed(2) + '°';
-            document.getElementById('dphi-val').textContent = (dphi * 180 / Math.PI).toFixed(2) + '°';
+            const de_cmc = delta_E_cmc(L1, a1, b1, L2, a2, b2);
+            const de_phi = delta_E_phi(L1, a1, b1, L2, a2, b2);
+            const de_cie = delta_E_cie2000(L1, a1, b1, L2, a2, b2);
 
-            document.getElementById('C1-val').textContent = C1.toFixed(2);
-            document.getElementById('C2-val').textContent = C2.toFixed(2);
-            document.getElementById('dC-val').textContent = (C2 - C1).toFixed(2);
+            // Display results
+            document.getElementById('de_phi').textContent = de_phi.toFixed(4);
+            document.getElementById('de_cmc').textContent = de_cmc.toFixed(4);
+            document.getElementById('de_cie').textContent = de_cie.toFixed(4);
 
-            document.getElementById('L1-d').textContent = L1.toFixed(2);
-            document.getElementById('L2-d').textContent = L2.toFixed(2);
-            document.getElementById('dL-val').textContent = (L2 - L1).toFixed(2);
+            document.getElementById('h1_val').textContent = c1.h.toFixed(2) + '°';
+            document.getElementById('h2_val').textContent = c2.h.toFixed(2) + '°';
+            document.getElementById('dh_val').textContent = dh.toFixed(2) + '°';
 
-            const maxVal = Math.max(cmc, phi, cie, 1);
-            document.getElementById('bar-cmc').style.width = Math.min(100, (cmc / maxVal) * 100) + '%';
-            document.getElementById('bar-cmc').textContent = cmc.toFixed(3);
-            document.getElementById('bar-phi').style.width = Math.min(100, (phi / maxVal) * 100) + '%';
-            document.getElementById('bar-phi').textContent = phi.toFixed(3);
-            document.getElementById('bar-cie').style.width = Math.min(100, (cie / maxVal) * 100) + '%';
-            document.getElementById('bar-cie').textContent = cie.toFixed(3);
+            document.getElementById('phi1_val').textContent = (phi1 * 180 / Math.PI).toFixed(2) + '°';
+            document.getElementById('phi2_val').textContent = (phi2 * 180 / Math.PI).toFixed(2) + '°';
+            document.getElementById('dphi_val').textContent = (Math.abs(dphi) * 180 / Math.PI).toFixed(2) + '°';
 
-            document.getElementById('results').classList.add('show');
-            console.log('Done!');
+            document.getElementById('C1_val').textContent = c1.C.toFixed(2);
+            document.getElementById('C2_val').textContent = c2.C.toFixed(2);
+            document.getElementById('dC_val').textContent = (c2.C - c1.C).toFixed(2);
+
+            document.getElementById('L1_disp').textContent = L1.toFixed(2);
+            document.getElementById('L2_disp').textContent = L2.toFixed(2);
+            document.getElementById('dL_val').textContent = (L2 - L1).toFixed(2);
+
+            // Update visualization bars
+            const max_de = Math.max(de_phi, de_cmc, de_cie, 1);
+            document.getElementById('bar_phi').style.width = (de_phi / max_de * 100) + '%';
+            document.getElementById('bar_phi').textContent = de_phi.toFixed(2);
+            document.getElementById('bar_cmc').style.width = (de_cmc / max_de * 100) + '%';
+            document.getElementById('bar_cmc').textContent = de_cmc.toFixed(2);
+            document.getElementById('bar_cie').style.width = (de_cie / max_de * 100) + '%';
+            document.getElementById('bar_cie').textContent = de_cie.toFixed(2);
+
+            // Update viz colors
+            const rgb1 = lab_to_rgb(L1, a1, b1);
+            const rgb2 = lab_to_rgb(L2, a2, b2);
+            document.getElementById('viz_color1').style.backgroundColor = 
+                `rgb(${Math.round(rgb1.r*255)}, ${Math.round(rgb1.g*255)}, ${Math.round(rgb1.b*255)})`;
+            document.getElementById('viz_color2').style.backgroundColor = 
+                `rgb(${Math.round(rgb2.r*255)}, ${Math.round(rgb2.g*255)}, ${Math.round(rgb2.b*255)})`;
+
+            // Show results
+            document.getElementById('results').classList.add('active');
         }
 
-        document.getElementById('calcBtn').addEventListener('click', calculate);
+        // Initialize
+        setupHiddenInputs();
+        syncInputs();
         updatePreview();
     </script>
 </body>
