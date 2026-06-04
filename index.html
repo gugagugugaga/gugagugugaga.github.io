@@ -29,10 +29,10 @@ body {
     box-shadow: 0 20px 60px rgba(0,0,0,0.3);
 }
 .preview-section { display: flex; justify-content: center; margin-bottom: 25px; width: 100%; }
-.preview-wrapper { display: flex; width: 100%; }
+.preview-wrapper { display: flex; width: 100%; border-radius: 12px; overflow: hidden; }
 .color-preview-box {
     flex: 1; height: 150px; border: none;
-    background: #ccc; /* 默认背景 */
+    background: #ccc;
 }
 .input-section {
     display: grid;
@@ -44,6 +44,7 @@ body {
     .input-section { grid-template-columns: 1fr; }
     .color-preview-box { height: 120px; }
     .results-grid { grid-template-columns: 1fr !important; }
+    .viz-grid { grid-template-columns: 1fr !important; }
 }
 .color-card {
     background: #f8f9fa;
@@ -129,7 +130,6 @@ body {
 .result-card .label { font-size: 0.9em; margin-bottom: 8px; opacity: 0.9; }
 .result-card .value { font-size: 1.8em; font-weight: 700; }
 
-/* 参数表格 */
 .params-table {
     width: 100%; border-collapse: collapse; margin-bottom: 25px; font-size: 0.95em;
 }
@@ -143,13 +143,11 @@ body {
 .params-table td.param-name { font-weight: 600; color: #2d3748; text-align: left; padding-left: 15px; }
 .params-table td.diff { color: #e53e3e; font-weight: 600; }
 
-/* 可视化 */
 .viz-section {
     margin-top: 20px; padding: 20px; background: #f8f9fa; border-radius: 15px;
 }
 .viz-section h3 { color: #667eea; margin-bottom: 15px; font-size: 1.1em; text-align: center; }
 .viz-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
-@media (max-width: 600px) { .viz-grid { grid-template-columns: 1fr; } }
 .viz-item { text-align: center; }
 .viz-item .viz-label { font-size: 0.85em; color: #666; margin-bottom: 8px; font-weight: 500; }
 .viz-bar-container { background: #e0e0e0; border-radius: 10px; height: 30px; overflow: hidden; position: relative; }
@@ -161,7 +159,7 @@ body {
 .viz-bar.phi-bar { background: linear-gradient(90deg, #667eea, #764ba2); }
 .viz-bar.cmc-bar { background: linear-gradient(90deg, #48bb78, #38a169); }
 .viz-bar.cie-bar { background: linear-gradient(90deg, #ed8936, #dd6b20); }
-.viz-colors { display: flex; justify-content: center; gap: 0; margin-top: 15px; }
+.viz-colors { display: flex; justify-content: center; gap: 0; margin-top: 15px; border-radius: 8px; overflow: hidden; }
 .viz-color-box { flex: 1; height: 80px; border: none; background: #ccc; }
 
 .formula-section {
@@ -183,7 +181,6 @@ body {
         <p class="subtitle">CIEDE2000 | CMC(l:c) | Φ空间感知均匀化</p>
     </div>
     <div class="main-card">
-        <!-- 颜色预览 -->
         <div class="preview-section">
             <div class="preview-wrapper">
                 <div class="color-preview-box" id="preview1"></div>
@@ -191,7 +188,6 @@ body {
             </div>
         </div>
 
-        <!-- 输入区 -->
         <div class="input-section">
             <div class="color-card">
                 <div class="color-header">
@@ -199,15 +195,15 @@ body {
                     <button class="btn-random" onclick="randomizeStandard()">🎲 随机</button>
                 </div>
                 <div class="input-group">
-                    <label>L* (明度, 0-100)</label>
+                    <label>L* (明度, 0–100)</label>
                     <input type="number" id="L1" value="50" min="0" max="100" step="0.1">
                 </div>
                 <div class="input-group">
-                    <label>a* (绿-红)</label>
+                    <label>a* (绿–红)</label>
                     <input type="number" id="a1" value="30" min="-128" max="127" step="0.1">
                 </div>
                 <div class="input-group">
-                    <label>b* (蓝-黄)</label>
+                    <label>b* (蓝–黄)</label>
                     <input type="number" id="b1" value="0" min="-128" max="127" step="0.1">
                 </div>
             </div>
@@ -216,21 +212,21 @@ body {
                     <h3>🟢 样品 (Sample)</h3>
                 </div>
                 <div class="input-group">
-                    <label>L* (明度, 0-100)</label>
+                    <label>L* (明度, 0–100)</label>
                     <input type="number" id="L2" value="50" min="0" max="100" step="0.1">
                     <div class="slider-container">
                         <input type="range" id="L2_slider" min="0" max="100" value="50" step="0.1">
                     </div>
                 </div>
                 <div class="input-group">
-                    <label>a* (绿-红)</label>
+                    <label>a* (绿–红)</label>
                     <input type="number" id="a2" value="30" min="-128" max="127" step="0.1">
                     <div class="slider-container">
                         <input type="range" id="a2_slider" min="-128" max="127" value="30" step="0.1">
                     </div>
                 </div>
                 <div class="input-group">
-                    <label>b* (蓝-黄)</label>
+                    <label>b* (蓝–黄)</label>
                     <input type="number" id="b2" value="10" min="-128" max="127" step="0.1">
                     <div class="slider-container">
                         <input type="range" id="b2_slider" min="-128" max="127" value="10" step="0.1">
@@ -241,7 +237,6 @@ body {
 
         <button class="btn-calculate" onclick="calculate()">计算色差</button>
 
-        <!-- 结果区 -->
         <div id="results" class="results-section">
             <div class="results-grid">
                 <div class="result-card">
@@ -249,7 +244,7 @@ body {
                     <div class="value" id="de_phi">-</div>
                 </div>
                 <div class="result-card">
-                    <div class="label">CMC 色差</div>
+                    <div class="label">CMC(2:1)</div>
                     <div class="value" id="de_cmc">-</div>
                 </div>
                 <div class="result-card">
@@ -258,7 +253,6 @@ body {
                 </div>
             </div>
 
-            <!-- 参数表格：L, φL, C, φC, h, φh -->
             <table class="params-table">
                 <thead>
                     <tr>
@@ -269,66 +263,29 @@ body {
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td class="param-name">L (明度)</td>
-                        <td id="L1_disp">-</td>
-                        <td id="L2_disp">-</td>
-                        <td class="diff" id="dL_val">-</td>
-                    </tr>
-                    <tr>
-                        <td class="param-name">φL (均匀化明度)</td>
-                        <td id="phiL1_val">-</td>
-                        <td id="phiL2_val">-</td>
-                        <td class="diff" id="dphiL_val">-</td>
-                    </tr>
-                    <tr>
-                        <td class="param-name">C (彩度)</td>
-                        <td id="C1_val">-</td>
-                        <td id="C2_val">-</td>
-                        <td class="diff" id="dC_val">-</td>
-                    </tr>
-                    <tr>
-                        <td class="param-name">φC (均匀化彩度)</td>
-                        <td id="phiC1_val">-</td>
-                        <td id="phiC2_val">-</td>
-                        <td class="diff" id="dphiC_val">-</td>
-                    </tr>
-                    <tr>
-                        <td class="param-name">h (色相角)</td>
-                        <td id="h1_val">-</td>
-                        <td id="h2_val">-</td>
-                        <td class="diff" id="dh_val">-</td>
-                    </tr>
-                    <tr>
-                        <td class="param-name">φh (均匀化色相)</td>
-                        <td id="phih1_val">-</td>
-                        <td id="phih2_val">-</td>
-                        <td class="diff" id="dphih_val">-</td>
-                    </tr>
+                    <tr><td class="param-name">L (明度)</td><td id="L1_disp">-</td><td id="L2_disp">-</td><td class="diff" id="dL_val">-</td></tr>
+                    <tr><td class="param-name">φL (均匀化明度)</td><td id="phiL1_val">-</td><td id="phiL2_val">-</td><td class="diff" id="dphiL_val">-</td></tr>
+                    <tr><td class="param-name">C (彩度)</td><td id="C1_val">-</td><td id="C2_val">-</td><td class="diff" id="dC_val">-</td></tr>
+                    <tr><td class="param-name">φC (均匀化彩度)</td><td id="phiC1_val">-</td><td id="phiC2_val">-</td><td class="diff" id="dphiC_val">-</td></tr>
+                    <tr><td class="param-name">h (色相角)</td><td id="h1_val">-</td><td id="h2_val">-</td><td class="diff" id="dh_val">-</td></tr>
+                    <tr><td class="param-name">φh (均匀化色相)</td><td id="phih1_val">-</td><td id="phih2_val">-</td><td class="diff" id="dphih_val">-</td></tr>
                 </tbody>
             </table>
 
-            <!-- 可视化 -->
             <div class="viz-section">
                 <h3>📊 色差可视化比较</h3>
                 <div class="viz-grid">
                     <div class="viz-item">
                         <div class="viz-label">Φ空间色差</div>
-                        <div class="viz-bar-container">
-                            <div class="viz-bar phi-bar" id="bar_phi">0</div>
-                        </div>
+                        <div class="viz-bar-container"><div class="viz-bar phi-bar" id="bar_phi">0</div></div>
                     </div>
                     <div class="viz-item">
-                        <div class="viz-label">CMC 色差</div>
-                        <div class="viz-bar-container">
-                            <div class="viz-bar cmc-bar" id="bar_cmc">0</div>
-                        </div>
+                        <div class="viz-label">CMC(2:1)</div>
+                        <div class="viz-bar-container"><div class="viz-bar cmc-bar" id="bar_cmc">0</div></div>
                     </div>
                     <div class="viz-item">
                         <div class="viz-label">CIEDE2000</div>
-                        <div class="viz-bar-container">
-                            <div class="viz-bar cie-bar" id="bar_cie">0</div>
-                        </div>
+                        <div class="viz-bar-container"><div class="viz-bar cie-bar" id="bar_cie">0</div></div>
                     </div>
                 </div>
                 <div class="viz-colors">
@@ -339,22 +296,25 @@ body {
         </div>
 
         <div class="formula-section">
-            <h4>核心公式</h4>
+            <h4>核心公式说明</h4>
             <p>
-                <strong>Φ空间色差：</strong><br>
-                <code>φL(L) = L + 100·tanh(0.0152(L-50)) - 1.6014(L-50) + 0.0509</code><br>
+                <strong>Φ空间色差（动态权重）：</strong><br>
+                <code>φL(L) = L + 100·tanh(0.0152·(L−50)) − 1.6014·(L−50) + 0.0509</code><br>
                 <code>φC(C) = 42.381·ln(1 + 0.0734·C)</code><br>
                 <code>φh(h,C) = h + f(C)·[G_f(h) + G_p(h)]</code><br>
-                <code>ΔE = ΔE_base · scale(ΔE_base)</code>, &nbsp;&nbsp;<code>scale(x) = 1.0736 + 1.1942·e^(-1.8467x)</code><br><br>
-                <strong>CMC(l:c)：</strong> <code>ΔE = sqrt[(ΔL/2S_L)^2 + (ΔC/S_C)^2 + (ΔH/S_H)^2]</code><br>
-                <strong>CIEDE2000：</strong> 标准加权欧氏距离 + 旋转修正项
+                <code>wL = 0.8579 + 0.9992·e^(−2.6811·|ΔφL|)</code>（亮度权重动态衰减）<br>
+                <code>wC = 0.4290 + 1.9097·e^(−5.3792·|ΔφC|)</code>（彩度权重动态衰减）<br>
+                <code>wH = 0.0265 + 0.4448·e^(−0.0085·|ΔφH|)</code>（色相权重动态衰减）<br>
+                <code>ΔE = √[(wL·ΔφL)² + (wC·ΔφC)² + (wH·ΔφH)²]</code><br><br>
+                <strong>CMC(l:c)：</strong> <code>ΔE = √[(ΔL/2S_L)² + (ΔC/S_C)² + (ΔH/S_H)²]</code>，权重基于标样计算<br>
+                <strong>CIEDE2000：</strong> 标准加权欧氏距离 + 旋转修正项 R_T
             </p>
         </div>
     </div>
 </div>
 
 <script>
-// ==================== PHI v4 组件 ====================
+// ==================== PHI 参数 ====================
 var PHI_L_A = 100.0, PHI_L_B = 0.0152145765, PHI_L_C = 1.6014254348, PHI_L_D = 0.0509212998;
 function phi_L(L) {
     var x = L - 50;
@@ -373,14 +333,19 @@ var PHI_H_D1 = 0.3000000000, PHI_H_D2 = -0.1876753277;
 var PHI_H_D3 = -(PHI_H_D1 + PHI_H_D2);
 var SEG1 = 2 * Math.PI / 3, SEG2 = 4 * Math.PI / 3;
 
+function mod2pi(x) {
+    var r = x % (2 * Math.PI);
+    return r < 0 ? r + 2 * Math.PI : r;
+}
+
 function phi_h(h_rad, C) {
-    if (C <= 0) return h_rad % (2 * Math.PI);
+    if (C <= 0) return mod2pi(h_rad);
     var f = Math.sqrt(Math.pow(C, 4) / (Math.pow(C, 4) + PHI_H_C0));
     var G_f = 0.0;
     for (var n = 1; n <= 4; n++) {
         G_f += PHI_H_A[n-1] * Math.sin(n * h_rad) + PHI_H_B[n-1] * (1 - Math.cos(n * h_rad));
     }
-    var h = h_rad % (2 * Math.PI);
+    var h = mod2pi(h_rad);
     var G_p = 0.0;
     if (h < SEG1) {
         G_p = PHI_H_D1 * h;
@@ -392,13 +357,13 @@ function phi_h(h_rad, C) {
     return h_rad + f * (G_f + G_p);
 }
 
-var SCALE_A = 1.0736, SCALE_B = 1.1942, SCALE_C = 1.8467;
-function scale_factor(x) {
-    return SCALE_A + SCALE_B * Math.exp(-SCALE_C * x);
-}
+// 动态权重参数（与 Python 文件完全一致）
+var wL0 = 0.8579, wL1 = 1.8571;
+var wC0 = 0.4290, wC1 = 2.3387;
+var wH0 = 0.0265, wH1 = 0.4713;
+var kL = 2.6811, kC = 5.3792, kH = 0.0085;
 
-// ==================== PHI v4-scale 色差公式 ====================
-function delta_E_PHI(L1, a1, b1, L2, a2, b2) {
+function delta_E_PHI_weighted(L1, a1, b1, L2, a2, b2) {
     var C1 = Math.sqrt(a1*a1 + b1*b1);
     var h1 = Math.atan2(b1, a1);
     var C2 = Math.sqrt(a2*a2 + b2*b2);
@@ -411,9 +376,11 @@ function delta_E_PHI(L1, a1, b1, L2, a2, b2) {
     if (Math.abs(dh) > Math.PI) dh = dh - 2 * Math.PI * (dh > 0 ? 1 : -1);
     var dH = 2 * Math.sqrt(phi_C(C1) * phi_C(C2)) * Math.sin(dh / 2);
 
-    var wL = 0.77, wC = 0.41, wH = 0.40;
-    var dE_base = Math.sqrt(Math.pow(wL * dL, 2) + Math.pow(wC * dC, 2) + Math.pow(wH * dH, 2));
-    return dE_base * scale_factor(dE_base);
+    var wL = wL0 + (wL1 - wL0) * Math.exp(-kL * Math.abs(dL));
+    var wC = wC0 + (wC1 - wC0) * Math.exp(-kC * Math.abs(dC));
+    var wH = wH0 + (wH1 - wH0) * Math.exp(-kH * Math.abs(dH));
+
+    return Math.sqrt(Math.pow(wL * dL, 2) + Math.pow(wC * dC, 2) + Math.pow(wH * dH, 2));
 }
 
 // ==================== CIEDE2000 ====================
@@ -425,25 +392,33 @@ function delta_E_CIEDE2000(L1, a1, b1, L2, a2, b2) {
     var a1p = (1 + G) * a1, a2p = (1 + G) * a2;
     var C1p = Math.sqrt(a1p*a1p + b1*b1);
     var C2p = Math.sqrt(a2p*a2p + b2*b2);
-    var h1p = (Math.atan2(b1, a1p) * 180 / Math.PI) % 360;
-    if (h1p < 0) h1p += 360;
-    var h2p = (Math.atan2(b2, a2p) * 180 / Math.PI) % 360;
-    if (h2p < 0) h2p += 360;
+
+    var h1p = Math.atan2(b1, a1p) * 180 / Math.PI;
+    h1p = ((h1p % 360) + 360) % 360;
+    var h2p = Math.atan2(b2, a2p) * 180 / Math.PI;
+    h2p = ((h2p % 360) + 360) % 360;
 
     var dLp = L2 - L1;
     var dCp = C2p - C1p;
+
     var dh = h2p - h1p;
-    if (Math.abs(dh) > 180) dh = dh - 360 * (dh > 0 ? 1 : -1);
+    if (Math.abs(dh) > 180) dh = dh > 0 ? dh - 360 : dh + 360;
     var dHp = 2 * Math.sqrt(C1p * C2p) * Math.sin((dh * Math.PI / 180) / 2);
 
     var L_avg = (L1 + L2) / 2;
     var Cp_avg = (C1p + C2p) / 2;
-    var h_avg = (h1p + h2p) / 2;
-    var h_diff = Math.abs(h1p - h2p);
-    if (h_diff > 180) h_avg += 180;
-    h_avg = h_avg % 360;
-    var h_rad = h_avg * Math.PI / 180;
 
+    var h_avg;
+    var h_diff = Math.abs(h1p - h2p);
+    if (h_diff <= 180) {
+        h_avg = (h1p + h2p) / 2;
+    } else {
+        if (h1p + h2p < 360) h_avg = (h1p + h2p + 360) / 2;
+        else h_avg = (h1p + h2p - 360) / 2;
+    }
+    if (C1p * C2p === 0) h_avg = h1p + h2p;
+
+    var h_rad = h_avg * Math.PI / 180;
     var T = 1 - 0.17 * Math.cos(h_rad - Math.PI/6)
               + 0.24 * Math.cos(2 * h_rad)
               + 0.32 * Math.cos(3 * h_rad + 6 * Math.PI / 180)
@@ -458,15 +433,15 @@ function delta_E_CIEDE2000(L1, a1, b1, L2, a2, b2) {
     return Math.sqrt(Math.pow(dLp / SL, 2) + Math.pow(dCp / SC, 2) + Math.pow(dHp / SH, 2) + RT * (dCp / SC) * (dHp / SH));
 }
 
-// ==================== CMC(l:c) ====================
-function T_func(h) {
-    h = ((h % 360) + 360) % 360;
-    if (h > 164 && h <= 345) return 0.56 + Math.abs(0.2 * Math.cos((h + 168) * Math.PI / 180));
-    return 0.36 + Math.abs(0.4 * Math.cos((h + 35) * Math.PI / 180));
+// ==================== CMC(l:c) — 基于标样参数 ====================
+function T_cmc(h_deg) {
+    h_deg = ((h_deg % 360) + 360) % 360;
+    if (h_deg >= 164 && h_deg <= 345) return 0.56 + Math.abs(0.2 * Math.cos((h_deg + 168) * Math.PI / 180));
+    return 0.36 + Math.abs(0.4 * Math.cos((h_deg + 35) * Math.PI / 180));
 }
-function f_func(C) { return Math.sqrt(Math.pow(C, 4) / (Math.pow(C, 4) + 1900)); }
-function Sc_func(C) { return 0.0638 * C / (1 + 0.0131 * C) + 0.638; }
-function Sl_func(L) { return 0.040975 * L / (1 + 0.01765 * L); }
+function f_cmc(C) { return Math.sqrt(Math.pow(C, 4) / (Math.pow(C, 4) + 1900)); }
+function Sc_cmc(C) { return 0.0638 * C / (1 + 0.0131 * C) + 0.638; }
+function Sl_cmc(L) { return L < 16 ? 0.511 : 0.040975 * L / (1 + 0.01765 * L); }
 
 function delta_E_CMC(L1, a1, b1, L2, a2, b2) {
     var C1 = Math.sqrt(a1*a1 + b1*b1);
@@ -482,16 +457,17 @@ function delta_E_CMC(L1, a1, b1, L2, a2, b2) {
     if (Math.abs(dh) > 180) dh = dh > 0 ? dh - 360 : dh + 360;
     var dH = 2 * Math.sqrt(C1 * C2) * Math.sin(dh * Math.PI / 360);
 
-    var Sc = Sc_func(C2);
-    var Sl = Sl_func(L2);
-    var T = T_func(h2);
-    var f = f_func(C2);
+    // CMC 权重基于标样 (Standard)
+    var Sc = Sc_cmc(C1);
+    var Sl = Sl_cmc(L1);
+    var T = T_cmc(h1);
+    var f = f_cmc(C1);
     var Sh = Sc * (T * f + 1 - f);
 
     return Math.sqrt(Math.pow(dL / (2 * Sl), 2) + Math.pow(dC / Sc, 2) + Math.pow(dH / Sh, 2));
 }
 
-// ==================== Lab → RGB ====================
+// ==================== Lab → RGB (D65) ====================
 function lab_to_xyz(L, a, b) {
     var Xn = 95.047, Yn = 100.0, Zn = 108.883;
     var fy = (L + 16) / 116;
@@ -520,7 +496,7 @@ function lab_to_rgb(L, a, b) {
     return xyz_to_rgb(xyz.X, xyz.Y, xyz.Z);
 }
 
-// ==================== UI ====================
+// ==================== UI 交互 ====================
 var isRandomized = false;
 
 function updatePreview() {
@@ -540,13 +516,12 @@ function randomizeStandard() {
     var L = Math.round((Math.random() * 80 + 10) * 10) / 10;
     var a = Math.round((Math.random() * 160 - 80) * 10) / 10;
     var b = Math.round((Math.random() * 160 - 80) * 10) / 10;
-    var L1_input = document.getElementById('L1');
-    var a1_input = document.getElementById('a1');
-    var b1_input = document.getElementById('b1');
-    L1_input.value = L; a1_input.value = a; b1_input.value = b;
-    L1_input.classList.add('hidden-value');
-    a1_input.classList.add('hidden-value');
-    b1_input.classList.add('hidden-value');
+    document.getElementById('L1').value = L;
+    document.getElementById('a1').value = a;
+    document.getElementById('b1').value = b;
+    document.getElementById('L1').classList.add('hidden-value');
+    document.getElementById('a1').classList.add('hidden-value');
+    document.getElementById('b1').classList.add('hidden-value');
     isRandomized = true;
     updatePreview();
     document.getElementById('results').classList.remove('active');
@@ -595,14 +570,12 @@ function calculate() {
 
     var de_cie = delta_E_CIEDE2000(L1, a1, b1, L2, a2, b2);
     var de_cmc = delta_E_CMC(L1, a1, b1, L2, a2, b2);
-    var de_phi = delta_E_PHI(L1, a1, b1, L2, a2, b2);
+    var de_phi = delta_E_PHI_weighted(L1, a1, b1, L2, a2, b2);
 
-    // 显示色差
     document.getElementById('de_phi').textContent = de_phi.toFixed(4);
     document.getElementById('de_cmc').textContent = de_cmc.toFixed(4);
     document.getElementById('de_cie').textContent = de_cie.toFixed(4);
 
-    // 表格：L, φL, C, φC, h, φh
     document.getElementById('L1_disp').textContent = L1.toFixed(2);
     document.getElementById('L2_disp').textContent = L2.toFixed(2);
     document.getElementById('dL_val').textContent = (L2 - L1).toFixed(2);
@@ -627,15 +600,14 @@ function calculate() {
     document.getElementById('h2_val').textContent = h2_deg;
     document.getElementById('dh_val').textContent = (dh * 180 / Math.PI).toFixed(2) + '°';
 
-    var phih1_deg = (phih1 * 180 / Math.PI).toFixed(2) + '°';
-    var phih2_deg = (phih2 * 180 / Math.PI).toFixed(2) + '°';
+    var phih1_deg = (mod2pi(phih1) * 180 / Math.PI).toFixed(2) + '°';
+    var phih2_deg = (mod2pi(phih2) * 180 / Math.PI).toFixed(2) + '°';
     var dphih = phih2 - phih1;
     if (Math.abs(dphih) > Math.PI) dphih = dphih - 2 * Math.PI * (dphih > 0 ? 1 : -1);
     document.getElementById('phih1_val').textContent = phih1_deg;
     document.getElementById('phih2_val').textContent = phih2_deg;
     document.getElementById('dphih_val').textContent = (dphih * 180 / Math.PI).toFixed(2) + '°';
 
-    // 可视化条
     var max_de = Math.max(de_phi, de_cmc, de_cie, 1);
     document.getElementById('bar_phi').style.width = (de_phi / max_de * 100) + '%';
     document.getElementById('bar_phi').textContent = de_phi.toFixed(2);
@@ -644,7 +616,6 @@ function calculate() {
     document.getElementById('bar_cie').style.width = (de_cie / max_de * 100) + '%';
     document.getElementById('bar_cie').textContent = de_cie.toFixed(2);
 
-    // 可视化颜色
     var rgb1 = lab_to_rgb(L1, a1, b1);
     var rgb2 = lab_to_rgb(L2, a2, b2);
     document.getElementById('viz_color1').style.backgroundColor = 'rgb(' + Math.round(rgb1.r*255) + ',' + Math.round(rgb1.g*255) + ',' + Math.round(rgb1.b*255) + ')';
@@ -653,7 +624,6 @@ function calculate() {
     document.getElementById('results').classList.add('active');
 }
 
-// 初始化
 setupHiddenInputs();
 syncInputs();
 updatePreview();
