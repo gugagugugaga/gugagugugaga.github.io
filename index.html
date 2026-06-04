@@ -171,6 +171,48 @@ body {
     background: #fff; padding: 2px 6px; border-radius: 4px;
     font-family: 'Courier New', monospace; color: #764ba2;
 }
+
+/* 公式面板切换按钮 */
+.btn-toggle-formula {
+    width: 100%; padding: 14px; margin: 20px 0 10px;
+    border: 2px dashed rgba(102, 126, 234, 0.4);
+    border-radius: 12px;
+    background: rgba(102, 126, 234, 0.06);
+    color: #667eea;
+    font-size: 1.05em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+}
+.btn-toggle-formula:hover {
+    background: rgba(102, 126, 234, 0.12);
+    border-color: rgba(102, 126, 234, 0.6);
+    transform: translateY(-1px);
+}
+.btn-toggle-formula.active {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #fff;
+    border-style: solid;
+    border-color: transparent;
+}
+
+/* Shadow DOM Host 容器 */
+#formula-host {
+    display: none;
+    margin-top: 10px;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    animation: fadeInUp 0.5s ease;
+}
+#formula-host.active {
+    display: block;
+}
 </style>
 <base target="_blank">
 </head>
@@ -295,7 +337,17 @@ body {
             </div>
         </div>
 
-        <div class="formula-section">
+        
+
+<!-- 公式展示切换按钮 -->
+<button class="btn-toggle-formula" onclick="toggleFormula()" id="btnFormula">
+    📖 查看完整公式定义
+</button>
+
+<!-- Shadow DOM Host：公式内容将注入此处 -->
+<div id="formula-host"></div>
+
+<div class="formula-section">
             <h4>核心公式说明</h4>
             <p>
                 <strong>Φ空间色差（动态权重）：</strong><br>
@@ -627,6 +679,532 @@ function calculate() {
 setupHiddenInputs();
 syncInputs();
 updatePreview();
+
+// ==================== 公式面板 Shadow DOM ====================
+(function() {
+    const host = document.getElementById('formula-host');
+    const shadow = host.attachShadow({mode: 'open'});
+
+    // 注入样式
+    const styleEl = document.createElement('style');
+    styleEl.textContent = `
+:host { box-sizing: border-box; }
+* { box-sizing: border-box; }
+:host { scroll-behavior: smooth; }
+:host {
+    font-family: "Noto Serif SC", "Songti SC", "SimSun", Georgia, serif;
+    background: #f7f9fc;
+    color: #1a1a2e;
+    line-height: 1.9;
+    padding-bottom: 60px;
+}
+.container { max-width: 900px; margin: 0 auto; padding: 0 20px; }
+
+/* 顶部标题区 */
+.hero {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 60%, #0f3460 100%);
+    color: #fff;
+    padding: 60px 20px 50px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+.hero::before {
+    content: "";
+    position: absolute;
+    top: -50%; left: -50%; width: 200%; height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.03) 1px, transparent 1px);
+    background-size: 30px 30px;
+    opacity: 0.5;
+    pointer-events: none;
+}
+.hero h1 {
+    font-size: 2.2em;
+    font-weight: 700;
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+    position: relative;
+}
+.hero .subtitle {
+    font-size: 1.05em;
+    color: rgba(255,255,255,0.75);
+    font-weight: 300;
+    position: relative;
+}
+.hero .badge {
+    display: inline-block;
+    margin-top: 20px;
+    padding: 6px 18px;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 20px;
+    font-size: 0.85em;
+    color: rgba(255,255,255,0.9);
+    backdrop-filter: blur(4px);
+}
+
+/* 导航 */
+.nav-bar {
+    background: #fff;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 14px 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+}
+.nav-bar ul {
+    list-style: none;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px 24px;
+}
+.nav-bar a {
+    text-decoration: none;
+    color: #4a5568;
+    font-size: 0.95em;
+    font-weight: 500;
+    transition: color 0.2s;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+.nav-bar a:hover { color: #0f3460; }
+
+/* 章节 */
+.section {
+    background: #fff;
+    border-radius: 16px;
+    padding: 40px 35px;
+    margin-top: 30px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+    border: 1px solid #edf2f7;
+}
+.section h2 {
+    font-size: 1.5em;
+    color: #0f3460;
+    margin-bottom: 25px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.section h2 .num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px; height: 32px;
+    background: linear-gradient(135deg, #0f3460, #16213e);
+    color: #fff;
+    border-radius: 8px;
+    font-size: 0.85em;
+    font-weight: 700;
+}
+
+/* 公式块 */
+.formula-block {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border-left: 4px solid #0f3460;
+    border-radius: 0 12px 12px 0;
+    padding: 22px 28px;
+    margin: 18px 0;
+    overflow-x: auto;
+}
+.formula-block .eq-main {
+    font-size: 1.15em;
+    color: #1a1a2e;
+    font-family: "Times New Roman", "Noto Serif", serif;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+.formula-block .eq-sub {
+    font-size: 1.05em;
+    color: #2d3748;
+    font-family: "Times New Roman", "Noto Serif", serif;
+    margin-top: 10px;
+    padding-left: 20px;
+    white-space: nowrap;
+}
+.formula-block .eq-where {
+    font-size: 0.95em;
+    color: #4a5568;
+    margin-top: 14px;
+    padding-left: 20px;
+    font-family: -apple-system, sans-serif;
+    line-height: 2;
+}
+
+/* 参数表格 */
+.params-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-size: 0.95em;
+    font-family: -apple-system, sans-serif;
+}
+.params-table thead {
+    background: linear-gradient(135deg, #0f3460, #16213e);
+    color: #fff;
+}
+.params-table th, .params-table td {
+    padding: 12px 14px;
+    text-align: center;
+    border: 1px solid #e2e8f0;
+}
+.params-table th { font-weight: 600; font-size: 0.9em; }
+.params-table tbody tr:nth-child(even) { background: #f8fafc; }
+.params-table tbody tr:hover { background: #edf2f7; }
+.params-table td:first-child {
+    font-weight: 600;
+    color: #0f3460;
+    text-align: left;
+    font-family: "Courier New", monospace;
+}
+
+/* 注释块 */
+.note {
+    background: #fffbeb;
+    border-left: 4px solid #f59e0b;
+    border-radius: 0 10px 10px 0;
+    padding: 16px 22px;
+    margin: 18px 0;
+    font-size: 0.92em;
+    color: #78350f;
+}
+.note strong { color: #92400e; }
+
+/* 步骤流程 */
+.flow-step {
+    display: flex;
+    gap: 15px;
+    align-items: flex-start;
+    margin: 16px 0;
+    padding: 16px 20px;
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+}
+.flow-step .step-icon {
+    width: 36px; height: 36px;
+    min-width: 36px;
+    background: linear-gradient(135deg, #0f3460, #16213e);
+    color: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.9em;
+}
+.flow-step .step-content { flex: 1; }
+.flow-step .step-title {
+    font-weight: 600;
+    color: #0f3460;
+    margin-bottom: 4px;
+    font-size: 1.05em;
+}
+
+/* 最终公式高亮 */
+.final-formula {
+    background: linear-gradient(135deg, #1a1a2e, #0f3460);
+    color: #fff;
+    border-radius: 16px;
+    padding: 35px 30px;
+    margin-top: 30px;
+    text-align: center;
+    box-shadow: 0 10px 40px rgba(15, 52, 96, 0.25);
+}
+.final-formula h2 {
+    color: #fff;
+    border-bottom: 1px solid rgba(255,255,255,0.2);
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+}
+.final-formula .big-eq {
+    font-size: 1.4em;
+    font-family: "Times New Roman", "Noto Serif", serif;
+    letter-spacing: 1px;
+    line-height: 2.2;
+    white-space: nowrap;
+    overflow-x: auto;
+}
+.final-formula .big-eq .var { color: #60a5fa; font-weight: 600; }
+.final-formula .big-eq .op { color: #94a3b8; }
+
+/* 底部 */
+.footer {
+    text-align: center;
+    margin-top: 50px;
+    padding: 30px 20px;
+    color: #718096;
+    font-size: 0.85em;
+    font-family: -apple-system, sans-serif;
+}
+
+@media (max-width: 600px) {
+    .hero h1 { font-size: 1.6em; }
+    .section { padding: 25px 18px; }
+    .formula-block { padding: 16px 14px; }
+    .formula-block .eq-main { font-size: 1em; }
+    .final-formula .big-eq { font-size: 1.1em; }
+    .params-table { font-size: 0.82em; }
+    .params-table th, .params-table td { padding: 8px 6px; }
+}
+`;
+    shadow.appendChild(styleEl);
+
+    // 注入内容
+    const contentEl = document.createElement('div');
+    contentEl.innerHTML = `<div class="hero">
+    <h1>Φ 空间动态权重色差公式</h1>
+    <p class="subtitle">基于感知均匀化变换与自适应权重的完整色差度量体系</p>
+    <div class="badge">Complete Formula Definition</div>
+</div>
+
+<div class="nav-bar">
+    <div class="container">
+        <ul>
+            <li><a href="#sec-overview" onclick="scrollToSection(event, \'sec-overview\')">概述</a></li>
+            <li><a href="#sec-phil" onclick="scrollToSection(event, \'sec-phil\')">φL 变换</a></li>
+            <li><a href="#sec-phic" onclick="scrollToSection(event, \'sec-phic\')">φC 变换</a></li>
+            <li><a href="#sec-phih" onclick="scrollToSection(event, \'sec-phih\')">φh 变换</a></li>
+            <li><a href="#sec-weights" onclick="scrollToSection(event, \'sec-weights\')">动态权重</a></li>
+            <li><a href="#sec-final" onclick="scrollToSection(event, \'sec-final\')">色差公式</a></li>
+            <li><a href="#sec-params" onclick="scrollToSection(event, \'sec-params\')">参数总表</a></li>
+        </ul>
+    </div>
+</div>
+
+<div class="container">
+
+<!-- 概述 -->
+<div class="section" id="sec-overview">
+    <h2><span class="num">0</span> 公式体系概述</h2>
+    <p>本公式体系通过三个独立的感知均匀化变换，将 CIELAB 空间映射至 Φ 空间，并引入随色差大小自适应衰减的动态权重，最终构建欧氏距离形式的色差度量。</p>
+    <div class="flow-step">
+        <div class="step-icon">1</div>
+        <div class="step-content">
+            <div class="step-title">正变换</div>
+            <div>Lab(L, a, b) → Φ(φL, φC, φh)</div>
+        </div>
+    </div>
+    <div class="flow-step">
+        <div class="step-icon">2</div>
+        <div class="step-content">
+            <div class="step-title">差值计算</div>
+            <div>ΔφL, ΔφC, Δφh → ΔφH</div>
+        </div>
+    </div>
+    <div class="flow-step">
+        <div class="step-icon">3</div>
+        <div class="step-content">
+            <div class="step-title">动态加权</div>
+            <div>wL(|ΔφL|), wC(|ΔφC|), wH(|ΔφH|)</div>
+        </div>
+    </div>
+    <div class="flow-step">
+        <div class="step-icon">4</div>
+        <div class="step-content">
+            <div class="step-title">色差合成</div>
+            <div>ΔE = √[(wL·ΔφL)² + (wC·ΔφC)² + (wH·ΔφH)²]</div>
+        </div>
+    </div>
+</div>
+
+<!-- φL -->
+<div class="section" id="sec-phil">
+    <h2><span class="num">1</span> 亮度均匀化变换  φL(L)</h2>
+    <p>通过双曲正切与线性修正的组合，对 CIELAB 明度轴进行非线性拉伸，使亮度差异在感知上更均匀。</p>
+    <div class="formula-block">
+        <div class="eq-main">
+            φL(L) = L + 100 · tanh( 0.0152145765 · (L − 50) ) − 1.6014254348 · (L − 50) + 0.0509212998
+        </div>
+    </div>
+    <div class="note">
+        <strong>设计意图：</strong>tanh 项在 L≈50 附近提供平滑过渡，线性项修正整体斜率，常数项保证 φL(50)≈50。
+    </div>
+</div>
+
+<!-- φC -->
+<div class="section" id="sec-phic">
+    <h2><span class="num">2</span> 彩度均匀化变换  φC(C)</h2>
+    <p>基于对数压缩，将 CIELAB 彩度 C = √(a²+b²) 映射至感知均匀的 φC 空间。低彩度区域获得更高分辨率，高彩度区域被压缩。</p>
+    <div class="formula-block">
+        <div class="eq-main">
+            φC(C) = 42.3810445416 · ln( 1 + 0.0733671851 · C ) ,&nbsp;&nbsp;C > 0
+        </div>
+        <div class="eq-sub" style="margin-top:8px">
+            φC(0) = 0
+        </div>
+    </div>
+    <div class="note">
+        <strong>反变换（解析）：</strong>C = ( exp( φC / 42.3810445416 ) − 1 ) / 0.0733671851
+    </div>
+</div>
+
+<!-- φh -->
+<div class="section" id="sec-phih">
+    <h2><span class="num">3</span> 色相均匀化变换  φh(h, C)</h2>
+    <p>色相变换由两部分组成：与彩度相关的傅里叶修正 <em>G<sub>f</sub></em>，以及分段线性修正 <em>G<sub>p</sub></em>。整体修正幅度通过因子 <em>f(C)</em> 随彩度自适应调节。</p>
+
+    <div class="formula-block">
+        <div class="eq-main">
+            φh(h, C) = h + f(C) · [ G<sub>f</sub>(h) + G<sub>p</sub>(h) ]
+        </div>
+        <div class="eq-sub">
+            f(C) = √( C⁴ / ( C⁴ + 1899.9627638178 ) )
+        </div>
+    </div>
+
+    <h3 style="margin:25px 0 12px; color:#2d3748; font-size:1.15em;">3.1 傅里叶修正项 G<sub>f</sub>(h)</h3>
+    <div class="formula-block">
+        <div class="eq-main">
+            G<sub>f</sub>(h) = Σ<sub>n=1</sub><sup>4</sup> [ A<sub>n</sub> · sin(nh) + B<sub>n</sub> · (1 − cos(nh)) ]
+        </div>
+    </div>
+    <table class="params-table">
+        <thead><tr><th>系数</th><th>n=1</th><th>n=2</th><th>n=3</th><th>n=4</th></tr></thead>
+        <tbody>
+            <tr><td>A<sub>n</sub></td><td>−0.1765456143</td><td>−0.0011933897</td><td>−0.0234583524</td><td>−0.0120449729</td></tr>
+            <tr><td>B<sub>n</sub></td><td>−0.0276516555</td><td>−0.0229325542</td><td>−0.0509802523</td><td>−0.0084910621</td></tr>
+        </tbody>
+    </table>
+
+    <h3 style="margin:25px 0 12px; color:#2d3748; font-size:1.15em;">3.2 分段线性修正项 G<sub>p</sub>(h̃)</h3>
+    <p>其中 h̃ = h mod 2π，将色相圆周三等分，每段采用不同斜率：</p>
+    <div class="formula-block">
+        <div class="eq-sub">
+            G<sub>p</sub> = 0.3000000000 · h̃ ,&nbsp;&nbsp;h̃ &lt; 2π/3
+        </div>
+        <div class="eq-sub">
+            G<sub>p</sub> = 0.3000000000 · (2π/3) − 0.1876753277 · (h̃ − 2π/3) ,&nbsp;&nbsp;2π/3 ≤ h̃ &lt; 4π/3
+        </div>
+        <div class="eq-sub">
+            G<sub>p</sub> = 0.3000000000 · (2π/3) − 0.1876753277 · (2π/3) − 0.1123246723 · (h̃ − 4π/3) ,&nbsp;&nbsp;h̃ ≥ 4π/3
+        </div>
+    </div>
+    <div class="note">
+        <strong>注：</strong>第三段斜率 D<sub>3</sub> = −(D<sub>1</sub> + D<sub>2</sub>) = −0.1123246723，保证分段函数在 2π 周期内首尾连续。
+    </div>
+</div>
+
+<!-- 动态权重 -->
+<div class="section" id="sec-weights">
+    <h2><span class="num">4</span> 动态权重函数</h2>
+    <p>三项权重均随对应维度差值的绝对值呈指数衰减，实现"小色差高敏感、大色差低敏感"的感知特性。</p>
+    <div class="formula-block">
+        <div class="eq-main">
+            wL = 0.8579 + 0.9992 · exp( −2.6811 · |ΔφL| )
+        </div>
+        <div class="eq-main" style="margin-top:12px">
+            wC = 0.4290 + 1.9097 · exp( −5.3792 · |ΔφC| )
+        </div>
+        <div class="eq-main" style="margin-top:12px">
+            wH = 0.0265 + 0.4448 · exp( −0.0085 · |ΔφH| )
+        </div>
+    </div>
+    <table class="params-table">
+        <thead><tr><th>权重</th><th>w₀ (下限)</th><th>w₁ (上限)</th><th>衰减系数 k</th></tr></thead>
+        <tbody>
+            <tr><td>wL</td><td>0.8579</td><td>1.8571</td><td>2.6811</td></tr>
+            <tr><td>wC</td><td>0.4290</td><td>2.3387</td><td>5.3792</td></tr>
+            <tr><td>wH</td><td>0.0265</td><td>0.4713</td><td>0.0085</td></tr>
+        </tbody>
+    </table>
+    <div class="note">
+        <strong>物理意义：</strong>当色差趋近于 0 时，权重趋近于 w₀+w₁（最大值）；当色差极大时，权重趋近于 w₀（最小值）。wH 的衰减系数极小，意味着色相权重几乎不随色差大小变化。
+    </div>
+</div>
+
+<!-- 色差公式 -->
+<div class="final-formula" id="sec-final">
+    <h2>最终色差公式</h2>
+    <div class="big-eq">
+        <div>ΔφL = φL(L₂) − φL(L₁)</div>
+        <div>ΔφC = φC(C₂) − φC(C₁)</div>
+        <div>Δφh = φh(h₂, C₂) − φh(h₁, C₁) &nbsp;&nbsp; <span class="op">(归一化至 [−π, π])</span></div>
+        <div>ΔφH = 2 · √( φC(C₁) · φC(C₂) ) · sin( Δφh / 2 )</div>
+        <div style="margin-top:18px; font-size:1.15em;">
+            <span class="var">ΔE</span> <span class="op">=</span> √[ <span class="var">(wL · ΔφL)²</span> <span class="op">+</span> <span class="var">(wC · ΔφC)²</span> <span class="op">+</span> <span class="var">(wH · ΔφH)²</span> ]
+        </div>
+    </div>
+</div>
+
+<!-- 参数总表 -->
+<div class="section" id="sec-params">
+    <h2><span class="num">5</span> 全部参数总表</h2>
+    <table class="params-table">
+        <thead><tr><th>参数名</th><th>符号</th><th>数值</th><th>所属模块</th></tr></thead>
+        <tbody>
+            <tr><td>φL 双曲正切幅值</td><td>A</td><td>100.0000000000</td><td>φL</td></tr>
+            <tr><td>φL 双曲正切斜率</td><td>B</td><td>0.0152145765</td><td>φL</td></tr>
+            <tr><td>φL 线性修正系数</td><td>C</td><td>1.6014254348</td><td>φL</td></tr>
+            <tr><td>φL 常数偏移</td><td>D</td><td>0.0509212998</td><td>φL</td></tr>
+            <tr><td>φC 对数幅值</td><td>K</td><td>42.3810445416</td><td>φC</td></tr>
+            <tr><td>φC 对数系数</td><td>cₐ</td><td>0.0733671851</td><td>φC</td></tr>
+            <tr><td>φh 彩度阈值</td><td>C₀</td><td>1899.9627638178</td><td>φh</td></tr>
+            <tr><td>φh 傅里叶 A₁</td><td>A₁</td><td>−0.1765456143</td><td>φh</td></tr>
+            <tr><td>φh 傅里叶 A₂</td><td>A₂</td><td>−0.0011933897</td><td>φh</td></tr>
+            <tr><td>φh 傅里叶 A₃</td><td>A₃</td><td>−0.0234583524</td><td>φh</td></tr>
+            <tr><td>φh 傅里叶 A₄</td><td>A₄</td><td>−0.0120449729</td><td>φh</td></tr>
+            <tr><td>φh 傅里叶 B₁</td><td>B₁</td><td>−0.0276516555</td><td>φh</td></tr>
+            <tr><td>φh 傅里叶 B₂</td><td>B₂</td><td>−0.0229325542</td><td>φh</td></tr>
+            <tr><td>φh 傅里叶 B₃</td><td>B₃</td><td>−0.0509802523</td><td>φh</td></tr>
+            <tr><td>φh 傅里叶 B₄</td><td>B₄</td><td>−0.0084910621</td><td>φh</td></tr>
+            <tr><td>φh 分段斜率 D₁</td><td>D₁</td><td>0.3000000000</td><td>φh</td></tr>
+            <tr><td>φh 分段斜率 D₂</td><td>D₂</td><td>−0.1876753277</td><td>φh</td></tr>
+            <tr><td>φh 分段斜率 D₃</td><td>D₃</td><td>−0.1123246723</td><td>φh</td></tr>
+            <tr><td>权重 wL 下限</td><td>wL₀</td><td>0.8579</td><td>权重</td></tr>
+            <tr><td>权重 wL 幅值</td><td>wL₁−wL₀</td><td>0.9992</td><td>权重</td></tr>
+            <tr><td>权重 wL 衰减</td><td>kL</td><td>2.6811</td><td>权重</td></tr>
+            <tr><td>权重 wC 下限</td><td>wC₀</td><td>0.4290</td><td>权重</td></tr>
+            <tr><td>权重 wC 幅值</td><td>wC₁−wC₀</td><td>1.9097</td><td>权重</td></tr>
+            <tr><td>权重 wC 衰减</td><td>kC</td><td>5.3792</td><td>权重</td></tr>
+            <tr><td>权重 wH 下限</td><td>wH₀</td><td>0.0265</td><td>权重</td></tr>
+            <tr><td>权重 wH 幅值</td><td>wH₁−wH₀</td><td>0.4448</td><td>权重</td></tr>
+            <tr><td>权重 wH 衰减</td><td>kH</td><td>0.0085</td><td>权重</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<div class="footer">
+    <p>Φ 空间动态权重色差公式 · 完整定义文档</p>
+    <p style="margin-top:6px; opacity:0.7;">基于 CIELAB 感知均匀化变换与自适应加权策略</p>
+</div>
+
+</div>`;
+    shadow.appendChild(contentEl);
+
+    // 注入 Shadow DOM 内脚本（滚动处理）
+    const scriptEl = document.createElement('script');
+    scriptEl.textContent = `
+        function scrollToSection(e, id) {
+            e.preventDefault();
+            const el = document.getElementById(id);
+            if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+    `;
+    shadow.appendChild(scriptEl);
+})();
+
+function toggleFormula() {
+    var host = document.getElementById('formula-host');
+    var btn = document.getElementById('btnFormula');
+    if (host.classList.contains('active')) {
+        host.classList.remove('active');
+        btn.classList.remove('active');
+        btn.innerHTML = '📖 查看完整公式定义';
+    } else {
+        host.classList.add('active');
+        btn.classList.add('active');
+        btn.innerHTML = '✕ 收起公式定义';
+        setTimeout(function() {
+            host.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
+    }
+}
 </script>
 </body>
 </html>
